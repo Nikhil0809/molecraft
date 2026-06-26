@@ -1,0 +1,31 @@
+.container { padding: 24px; max-width: 1200px; margin: 0 auto; color: #e0e0e0; }
+.header { margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin: 0; }
+.subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+.controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+.tabs { display: flex; gap: 4px; background: #1a1a2e; border-radius: 8px; padding: 4px; }
+.tab { padding: 8px 16px; border-radius: 6px; border: none; background: transparent; color: #888; cursor: pointer; font-size: 13px; }
+.active { background: #6c5ce7; color: #fff; }
+.input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; font-size: 13px; min-width: 250px; font-family: 'JetBrains Mono', monospace; }
+.button { padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #6c5ce7, #a66cff); color: #fff; font-weight: 600; cursor: pointer; }
+.results { animation: fadeIn 0.3s ease; }
+.section { margin-bottom: 16px; }
+.searchSummary { padding: 12px; background: #1a1a2e; border: 1px solid #6c5ce744; border-radius: 8px; margin-bottom: 12px; color: #a66cff; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.patentGrid { display: grid; gap: 8px; }
+.patent { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+.patentNum { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6c5ce7; margin-bottom: 2px; }
+.patentTitle { font-size: 14px; color: #fff; margin-bottom: 4px; }
+.patentMeta { display: flex; gap: 12px; font-size: 12px; color: #888; }
+.granted { color: #00b894; }
+.published { color: #fdcb6e; }
+.assignees { margin-top: 8px; font-size: 12px; color: #555; }
+.ftoSummary { padding: 12px; background: #1a1a2e; border: 1px solid #e1705544; border-radius: 8px; margin-bottom: 12px; color: #e17055; font-size: 13px; }
+.riskCard { padding: 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+.highRisk { background: #e1705522; border: 1px solid #e1705544; color: #e17055; }
+.riskNum { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.rec { padding: 6px 12px; margin-top: 8px; font-size: 13px; color: #74b9ff; }
+.noveltyScore { font-size: 20px; font-weight: 700; color: #fdcb6e; margin-bottom: 8px; }
+.noveltyStatus { padding: 8px 16px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; font-weight: 600; background: #00b89422; color: #00b894; display: inline-block; }
+.priorArt { padding: 8px 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 6px; margin-bottom: 4px; font-size: 12px; color: #aaa; font-family: 'JetBrains Mono', monospace; }
+.footer { margin-top: 12px; text-align: right; font-size: 11px; color: #555; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

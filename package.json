@@ -1,0 +1,13 @@
+{
+  "name": "molecraft",
+  "version": "4.0.0",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:admin": "npm run dev --workspace=apps/rag-admin",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}

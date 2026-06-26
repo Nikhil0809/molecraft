@@ -1,0 +1,46 @@
+.container {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas {
+  cursor: grab;
+  outline: none;
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+.controls {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.ctrlBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 17, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.ctrlBtn:hover {
+  background: rgba(15, 17, 23, 0.9);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}

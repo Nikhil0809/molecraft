@@ -1,0 +1,12 @@
+node_modules
+apps/rag-admin/node_modules
+apps/web/node_modules
+.git
+**/*.md
+.gitignore
+**/__pycache__
+**/*.pyc
+.tox
+.venv
+venv
+apps/rag-admin

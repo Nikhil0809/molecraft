@@ -1,0 +1,33 @@
+.container { padding: 24px; max-width: 1200px; margin: 0 auto; color: #e0e0e0; }
+.header { margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin: 0; }
+.subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+.controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.input { flex: 2; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; font-size: 13px; font-family: 'JetBrains Mono', monospace; min-width: 300px; }
+.btnRetro { padding: 12px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #e17055, #fdcb6e); color: #fff; font-weight: 600; cursor: pointer; }
+.btnPlan { padding: 12px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #00b894, #00cec9); color: #fff; font-weight: 600; cursor: pointer; }
+.btnOrder { padding: 12px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #6c5ce7, #a66cff); color: #fff; font-weight: 600; cursor: pointer; }
+.results { animation: fadeIn 0.3s ease; }
+.section { margin-bottom: 16px; }
+.sa { font-size: 24px; font-weight: 700; color: #fdcb6e; margin-bottom: 12px; }
+.routeGrid { display: grid; gap: 12px; }
+.route { background: #1a1a2e; border: 1px solid #e1705544; border-radius: 12px; padding: 16px; }
+.routeTitle { font-weight: 600; color: #e17055; margin-bottom: 8px; }
+.routeBody { font-size: 13px; color: #aaa; display: flex; flex-direction: column; gap: 4px; }
+.planSummary { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 16px; background: #1a1a2e; border: 1px solid #00cec944; border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: #00cec9; font-family: 'JetBrains Mono', monospace; }
+.stepGrid { display: grid; gap: 12px; }
+.step { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; display: flex; gap: 16px; }
+.stepNum { font-size: 14px; font-weight: 700; color: #00b894; min-width: 60px; }
+.stepBody { flex: 1; }
+.rxn { font-weight: 600; color: #fff; margin-bottom: 4px; }
+.cond { font-size: 12px; color: #888; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+.vendorGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.vendor { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; text-align: center; }
+.vendorName { font-weight: 600; color: #6c5ce7; margin-bottom: 4px; }
+.vendorPrice { font-size: 20px; font-weight: 700; color: #a66cff; margin-bottom: 4px; }
+.vendorStatus { font-size: 12px; color: #888; }
+.vendorLead { font-size: 11px; color: #555; }
+.best { margin-top: 12px; padding: 8px 16px; background: #6c5ce722; border-radius: 6px; font-size: 13px; color: #a66cff; }
+.btnRetro:disabled, .btnPlan:disabled, .btnOrder:disabled { opacity: 0.5; cursor: not-allowed; }
+.footer { margin-top: 12px; text-align: right; font-size: 11px; color: #555; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

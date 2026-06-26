@@ -1,0 +1,66 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.skeleton {
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 25%,
+    var(--bg-raised) 50%,
+    var(--bg-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.svgContainer {
+  transition: opacity var(--duration-normal) ease;
+}
+
+.svgContainer :global(svg) {
+  display: block;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.hidden {
+  opacity: 0;
+  position: absolute;
+}
+
+.fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.fallbackSmiles {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  word-break: break-all;
+  max-width: 100%;
+  text-align: center;
+}
+
+.fallbackNote {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

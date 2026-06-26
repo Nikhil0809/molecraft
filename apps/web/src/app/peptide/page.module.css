@@ -1,0 +1,18 @@
+.container { padding: 24px; max-width: 1200px; margin: 0 auto; color: #e0e0e0; }
+.header { margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin: 0; }
+.subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+.controls { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; }
+.input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; font-size: 13px; min-width: 150px; }
+.checkbox { display: flex; align-items: center; gap: 6px; color: #888; font-size: 14px; cursor: pointer; }
+.button { padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #00b894, #00cec9); color: #fff; font-weight: 600; cursor: pointer; }
+.results { animation: fadeIn 0.3s ease; }
+.summary { padding: 12px; background: #1a1a2e; border: 1px solid #00b89444; border-radius: 8px; margin-bottom: 12px; color: #00b894; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 12px; }
+.card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
+.cardHeader { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 4px; }
+.affinity { font-size: 22px; font-weight: 700; color: #00b894; margin-bottom: 6px; }
+.sequence { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #fff; letter-spacing: 1px; margin-bottom: 8px; word-break: break-all; }
+.meta { font-size: 12px; color: #888; margin-bottom: 2px; }
+.footer { margin-top: 12px; text-align: right; font-size: 11px; color: #555; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

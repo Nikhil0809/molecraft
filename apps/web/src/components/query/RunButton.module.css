@@ -1,0 +1,42 @@
+.button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-primary);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) ease;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--accent-primary-hover);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button.loading {
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

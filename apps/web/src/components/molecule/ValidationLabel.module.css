@@ -1,0 +1,13 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--accent-success);
+  background: var(--accent-success-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  cursor: help;
+  white-space: nowrap;
+}

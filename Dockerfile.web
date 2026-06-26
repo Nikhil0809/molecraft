@@ -1,0 +1,32 @@
+FROM node:20-alpine AS base
+
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/rag-admin/package.json ./apps/rag-admin/
+COPY apps/web/ ./apps/web/
+COPY apps/rag-admin/ ./apps/rag-admin/
+RUN npm ci
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps ./apps
+COPY package.json package-lock.json ./
+RUN npm run build
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/apps/rag-admin/.next ./apps/rag-admin/.next
+COPY --from=builder /app/apps/rag-admin/package.json ./apps/rag-admin/
+COPY package.json ./
+
+EXPOSE 3000 3001
+
+CMD ["npm", "run", "dev"]

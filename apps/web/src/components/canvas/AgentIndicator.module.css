@@ -1,0 +1,64 @@
+.constellation {
+  pointer-events: none;
+  z-index: 5;
+}
+
+.agent {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--agent-color, var(--text-secondary));
+  box-shadow: 0 0 6px var(--agent-color, var(--text-secondary));
+}
+
+.label {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.agent:hover .label {
+  opacity: 1;
+}
+
+/* Status animations */
+.searching .dot {
+  animation: pulse-search 1.2s ease-in-out infinite;
+}
+
+.done .dot {
+  box-shadow: 0 0 8px var(--accent-success);
+}
+
+.error .dot {
+  background: var(--accent-danger);
+  box-shadow: 0 0 8px var(--accent-danger);
+}
+
+.idle .dot {
+  opacity: 0.4;
+}
+
+@keyframes pulse-search {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+}

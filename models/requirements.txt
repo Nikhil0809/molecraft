@@ -1,0 +1,6 @@
+-r affinity_predictor/requirements.txt
+-r generative/requirements.txt
+-r rag_pipeline/requirements.txt
+-r docking/requirements.txt
+-r proteochem/requirements.txt
+httpx==0.27.2

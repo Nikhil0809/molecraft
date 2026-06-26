@@ -1,0 +1,344 @@
+.page {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+}
+
+.badge {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--accent-primary);
+  background: var(--accent-primary-muted);
+  border: 1px solid rgba(79, 142, 247, 0.2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: border-color var(--duration-fast) ease;
+}
+
+.card:hover {
+  border-color: var(--border-mid);
+}
+
+.cardTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-mid);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profileMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+}
+
+.userRole {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.userOrg {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.profileDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+
+.detailLabel {
+  color: var(--text-muted);
+}
+
+.detailValue {
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+/* Circular Chart */
+.gaugeContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  flex: 1;
+}
+
+.radialGauge {
+  width: 100px;
+  height: 100px;
+}
+
+.circularChart {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.circleBg {
+  fill: none;
+  stroke: var(--bg-raised);
+  stroke-width: 2.8;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  animation: progress 1s ease-out forwards;
+}
+
+.percentage {
+  fill: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: var(--weight-bold);
+  text-anchor: middle;
+}
+
+.gaugeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gaugeStat {
+  display: flex;
+  flex-direction: column;
+}
+
+.gaugeVal {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.gaugeLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Stats Card */
+.statsCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--bg-raised);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+}
+
+.statLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.statValue {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+/* Activity Table */
+.tableCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-mid);
+}
+
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.actionCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+.actionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.actionIcon.generate {
+  background: var(--accent-primary-muted);
+}
+
+.actionIcon.predict {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.actionIcon.export {
+  background: var(--accent-success-muted);
+}
+
+.monoCell {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.statusSuccess {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--accent-success);
+  background: var(--accent-success-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(52, 201, 126, 0.2);
+}
+
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0, 100;
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: var(--space-3);
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .table {
+    font-size: var(--text-xs);
+  }
+}

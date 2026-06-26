@@ -1,0 +1,19 @@
+.badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.value {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-primary);
+  line-height: var(--leading-xl);
+}
+
+.unit {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}

@@ -1,0 +1,86 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Tier 1 */
+.tier1 .badge {
+  background: var(--tier1-bg);
+  color: var(--tier1-text);
+  border: 1px solid var(--tier1-border);
+}
+
+.tier1 .label {
+  color: var(--tier1-text);
+}
+
+/* Tier 2 */
+.tier2 .badge {
+  background: var(--tier2-bg);
+  color: var(--tier2-text);
+  border: 1px solid var(--tier2-border);
+}
+
+.tier2 .label {
+  color: var(--tier2-text);
+}
+
+/* Tier 3 */
+.tier3 .badge {
+  background: var(--tier3-bg);
+  color: var(--tier3-text);
+  border: 1px solid var(--tier3-border);
+}
+
+.tier3 .label {
+  color: var(--tier3-text);
+}
+
+.warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--accent-warning);
+  background: var(--accent-warning-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.sublabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-8);
+}

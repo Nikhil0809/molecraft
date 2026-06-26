@@ -1,0 +1,319 @@
+/* ═══════════════════════════════════════════════════════
+   MoleCraft v4 — Design System
+   Enterprise-grade precision tool for computational chemistry
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  /* Colors — Background */
+  --bg-base: #05070e;
+  --bg-surface: #0a0e1c;
+  --bg-raised: #12182c;
+  --bg-overlay: rgba(5, 7, 14, 0.9);
+
+  /* Colors — Border */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-mid: rgba(255, 255, 255, 0.1);
+  --border-focus: rgba(99, 102, 241, 0.6);
+
+  /* Colors — Accent */
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #818cf8;
+  --accent-primary-muted: rgba(99, 102, 241, 0.15);
+  --accent-success: #10b981;
+  --accent-success-muted: rgba(16, 185, 129, 0.15);
+  --accent-warning: #f59e0b;
+  --accent-warning-muted: rgba(245, 158, 11, 0.15);
+  --accent-danger: #f43f5e;
+  --accent-danger-muted: rgba(244, 63, 94, 0.15);
+
+  /* Colors — Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #05070e;
+
+  /* Colors — Tier Badges */
+  --tier1-bg: rgba(99, 102, 241, 0.12);
+  --tier1-text: #818cf8;
+  --tier1-border: rgba(99, 102, 241, 0.3);
+
+  --tier2-bg: rgba(245, 158, 11, 0.12);
+  --tier2-text: #fbbf24;
+  --tier2-border: rgba(245, 158, 11, 0.3);
+
+  --tier3-bg: rgba(244, 63, 94, 0.12);
+  --tier3-text: #fda4af;
+  --tier3-border: rgba(244, 63, 94, 0.3);
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 0.9375rem;  /* 15px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.5rem;       /* 24px */
+  --text-2xl: 2rem;        /* 32px */
+
+  --leading-xs: 1.4;
+  --leading-sm: 1.5;
+  --leading-base: 1.6;
+  --leading-lg: 1.4;
+  --leading-xl: 1.2;
+  --leading-2xl: 1.1;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 600;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.7);
+  --shadow-glow-primary: 0 0 24px rgba(99, 102, 241, 0.2);
+
+  /* Layout */
+  --sidebar-collapsed: 64px;
+  --sidebar-expanded: 220px;
+  --query-bar-height: 64px;
+  --status-strip-height: 44px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* v5 — Canvas */
+  --canvas-grid-color: rgba(255, 255, 255, 0.015);
+  --canvas-node-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.05);
+  --canvas-glow-primary: 0 0 40px rgba(99, 102, 241, 0.1);
+
+  /* v5 — Holographic */
+  --holographic-scan: rgba(99, 102, 241, 0.04);
+  --holographic-glow: rgba(99, 102, 241, 0.12);
+  --holographic-rim: rgba(255, 255, 255, 0.06);
+
+  /* v5 — Temporal */
+  --timeline-track: var(--border-subtle);
+  --timeline-fill: linear-gradient(90deg, var(--accent-primary), #06b6d4);
+  --degradation-safe: var(--accent-success);
+  --degradation-warning: var(--accent-warning);
+  --degradation-critical: var(--accent-danger);
+
+  /* v5 — Ambient */
+  --ambient-bg: rgba(10, 14, 28, 0.85);
+  --ambient-border: rgba(255, 255, 255, 0.05);
+  --action-wheel-bg: var(--bg-surface);
+  --suggestion-highlight: var(--accent-primary-muted);
+}
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+body {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  overflow: hidden;
+  height: 100vh;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-primary-hover);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ── Utility ── */
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes searchPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(79, 142, 247, 0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── v5 — Canvas ── */
+@keyframes canvasFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes nodeAppear {
+  from { opacity: 0; transform: scale(0.8) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes holographicScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes rippleSuccess {
+  0% { box-shadow: 0 0 0 0 rgba(52, 201, 126, 0.4); }
+  100% { box-shadow: 0 0 0 20px rgba(52, 201, 126, 0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--accent-primary)); }
+  50% { filter: drop-shadow(0 0 12px var(--accent-primary)); }
+}
+
+@keyframes orbitSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 25%,
+    var(--bg-raised) 50%,
+    var(--bg-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}

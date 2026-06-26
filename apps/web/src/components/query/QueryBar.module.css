@@ -1,0 +1,217 @@
+.wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.queryBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  min-height: 52px;
+}
+
+.queryBar:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.queryBar.hasError {
+  border-color: var(--accent-danger);
+  box-shadow: 0 0 20px rgba(232, 85, 85, 0.15);
+}
+
+.inputArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.searchIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: transparent;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:disabled {
+  opacity: 0.5;
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: all var(--duration-fast) ease;
+  flex-shrink: 0;
+}
+
+.clearButton:hover {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--accent-danger);
+  animation: fadeIn var(--duration-fast) ease;
+}
+
+.shortcutHint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.shortcutHint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-mid);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.parserBadge {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  animation: fadeIn var(--duration-fast) ease;
+}
+
+.parserBadge.smiles {
+  background: var(--accent-success-muted);
+  color: var(--accent-success);
+  border: 1px solid rgba(52, 201, 126, 0.2);
+}
+
+.parserBadge.target {
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary);
+  border: 1px solid rgba(79, 142, 247, 0.2);
+}
+
+.bottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.templates {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.templateLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.templatePill {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.templatePill:hover {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+  border-color: var(--border-mid);
+}
+
+.templatePill.templateActive {
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+@media (max-width: 767px) {
+  .wrapper {
+    padding: var(--space-3);
+  }
+
+  .queryBar {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .bottomBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .shortcutHint {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

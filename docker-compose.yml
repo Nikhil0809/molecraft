@@ -1,0 +1,257 @@
+services:
+  affinity-predictor:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8001
+    working_dir: /app/models/affinity_predictor
+    volumes:
+      - ./models:/app/models
+
+  molecule-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000
+    working_dir: /app/models/generative
+    volumes:
+      - ./models:/app/models
+    depends_on:
+      - affinity-predictor
+
+  rag-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8002:8002"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - PUBMED_API_KEY=${PUBMED_API_KEY:-}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8002
+    working_dir: /app/models/rag_pipeline
+    volumes:
+      - ./models:/app/models
+
+  docking:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8003:8003"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - VINA_PATH=${VINA_PATH:-vina}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8003
+    working_dir: /app/models/docking
+    volumes:
+      - ./models:/app/models
+
+  proteochem:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8004:8004"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8004
+    working_dir: /app/models/proteochem
+    volumes:
+      - ./models:/app/models
+
+  foundation-models:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8005:8005"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8005
+    working_dir: /app/models/foundation_models
+    volumes:
+      - ./models:/app/models
+
+  admet-ml:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8006:8006"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8006
+    working_dir: /app/models/admet_ml
+    volumes:
+      - ./models:/app/models
+
+  omics-discovery:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8010:8010"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8010
+    working_dir: /app/models/omics_discovery
+    volumes:
+      - ./models:/app/models
+
+  antibody-design:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8020:8020"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8020
+    working_dir: /app/models/antibody_design
+    volumes:
+      - ./models:/app/models
+
+  protac-design:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8021:8021"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8021
+    working_dir: /app/models/protac_design
+    volumes:
+      - ./models:/app/models
+
+  rna-design:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8022:8022"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8022
+    working_dir: /app/models/rna_design
+    volumes:
+      - ./models:/app/models
+
+  peptide-design:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8023:8023"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8023
+    working_dir: /app/models/peptide_design
+    volumes:
+      - ./models:/app/models
+
+  clinical-trial:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8030:8030"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8030
+    working_dir: /app/models/clinical_trial
+    volumes:
+      - ./models:/app/models
+
+  lab-automation:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8040:8040"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8040
+    working_dir: /app/models/lab_automation
+    volumes:
+      - ./models:/app/models
+
+  physics-sim:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8050:8050"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8050
+    working_dir: /app/models/physics_sim
+    volumes:
+      - ./models:/app/models
+
+  patent-ip:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8060:8060"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8060
+    working_dir: /app/models/patent_ip
+    volumes:
+      - ./models:/app/models
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - MODEL_API_URL=http://affinity-predictor:8001
+      - GENERATIVE_API_URL=http://molecule-generator:8000
+      - RAG_API_URL=http://rag-pipeline:8002
+      - DOCKING_API_URL=http://docking:8003
+      - PROTEO_API_URL=http://proteochem:8004
+      - FOUNDATION_API_URL=http://foundation-models:8005
+      - ADMET_API_URL=http://admet-ml:8006
+      - OMICS_API_URL=http://omics-discovery:8010
+      - ANTIBODY_API_URL=http://antibody-design:8020
+      - PROTAC_API_URL=http://protac-design:8021
+      - RNA_API_URL=http://rna-design:8022
+      - PEPTIDE_API_URL=http://peptide-design:8023
+      - CLINICAL_API_URL=http://clinical-trial:8030
+      - LAB_API_URL=http://lab-automation:8040
+      - PHYSICS_API_URL=http://physics-sim:8050
+      - PATENT_API_URL=http://patent-ip:8060
+    depends_on:
+      - affinity-predictor
+      - molecule-generator
+      - rag-pipeline
+      - docking
+      - proteochem
+      - foundation-models
+      - admet-ml
+      - omics-discovery
+      - antibody-design
+      - protac-design
+      - rna-design
+      - peptide-design
+      - clinical-trial
+      - lab-automation
+      - physics-sim
+      - patent-ip

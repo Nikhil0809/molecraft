@@ -1,0 +1,22 @@
+.container { padding: 24px; max-width: 1200px; margin: 0 auto; color: #e0e0e0; }
+.header { margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin: 0; }
+.subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+.controls { display: flex; gap: 12px; margin-bottom: 24px; }
+.select { padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; font-size: 14px; min-width: 150px; }
+.button { padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #00b894, #00cec9); color: #fff; font-weight: 600; cursor: pointer; }
+.button:disabled { opacity: 0.5; }
+.results { animation: fadeIn 0.3s ease; }
+.targetInfo { padding: 12px 16px; background: #1a1a2e; border: 1px solid #00b89444; border-radius: 8px; margin-bottom: 16px; color: #00b894; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
+.card:hover { border-color: #00b894; }
+.cardHeader { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 8px; }
+.affinity { font-size: 24px; font-weight: 700; color: #00b894; margin-bottom: 8px; }
+.detail { font-size: 13px; color: #aaa; margin-bottom: 4px; }
+.detail code { background: #222; padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #fdcb6e; }
+.high { color: #e17055; }
+.medium { color: #fdcb6e; }
+.low { color: #00b894; }
+.footer { margin-top: 12px; text-align: right; font-size: 11px; color: #555; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

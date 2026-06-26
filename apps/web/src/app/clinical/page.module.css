@@ -1,0 +1,24 @@
+.container { padding: 24px; max-width: 1200px; margin: 0 auto; color: #e0e0e0; }
+.header { margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 700; color: #fff; margin: 0; }
+.subtitle { font-size: 14px; color: #888; margin-top: 4px; }
+.controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+.select { padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; font-size: 14px; }
+.inputSmall { padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: #e0e0e0; width: 100px; }
+.button { padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #0984e3, #74b9ff); color: #fff; font-weight: 600; cursor: pointer; }
+.modeBtn { padding: 12px 24px; border-radius: 8px; border: 1px solid #444; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 13px; }
+.results { animation: fadeIn 0.3s ease; }
+.trialInfo { padding: 12px 16px; background: #1a1a2e; border: 1px solid #0984e344; border-radius: 8px; margin-bottom: 16px; color: #74b9ff; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; }
+.cardHeader { font-size: 14px; font-weight: 600; color: #74b9ff; margin-bottom: 8px; }
+.stat { font-size: 13px; color: #aaa; margin-bottom: 4px; }
+.adaptive { margin-top: 12px; padding: 8px 16px; background: #0984e322; border-radius: 6px; font-size: 12px; color: #74b9ff; }
+.patientStats { }
+.statGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.statCard { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 16px; text-align: center; }
+.statCard strong { display: block; font-size: 24px; color: #0984e3; }
+.statCard span { font-size: 12px; color: #888; }
+.patientRow { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 10px 16px; margin-bottom: 6px; font-size: 12px; color: #aaa; font-family: 'JetBrains Mono', monospace; }
+.footer { margin-top: 12px; text-align: right; font-size: 11px; color: #555; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
