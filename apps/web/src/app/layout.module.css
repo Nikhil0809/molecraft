@@ -3,23 +3,73 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  background: #0B0B12;
+  color: #e5e7eb;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Ambient glows (behind main panel) */
+.ambientGlow1 {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.03);
+  filter: blur(120px);
+  top: -160px;
+  left: -160px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambientGlow2 {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.03);
+  filter: blur(150px);
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Main Panel ── */
 .mainPanel {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  position: relative;
+  z-index: 1;
+  /* grid-matrix background */
+  background-size: 24px 24px;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
-@media (max-width: 767px) {
-  .appShell {
-    flex-direction: column-reverse;
-  }
-
-  .mainPanel {
-    height: calc(100vh - 60px);
-  }
+/* ── Scrollbar ── */
+.mainPanel::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
+
+.mainPanel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.mainPanel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+
+

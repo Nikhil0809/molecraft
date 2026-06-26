@@ -5,7 +5,7 @@ import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, displayName, role, organization } = await req.json();
+    const { email, password, displayName, role, organization, professionalRole, usageIntent, referralSource } = await req.json();
 
     if (!email || !password || !displayName) {
       return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 });
@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
     await sql`
       INSERT INTO users (
         id, email, display_name, role, organization, password_hash, 
-        avatar_url, is_active, tier, compute_credits, created_at, updated_at
+        avatar_url, is_active, tier, compute_credits, created_at, updated_at,
+        professional_role, usage_intent, referral_source
       )
       VALUES (
         ${userId}, 
@@ -43,7 +44,10 @@ export async function POST(req: NextRequest) {
         'standard', 
         1000, 
         NOW(), 
-        NOW()
+        NOW(),
+        ${professionalRole || null},
+        ${usageIntent || null},
+        ${referralSource || null}
       )
     `;
 
@@ -84,6 +88,9 @@ export async function POST(req: NextRequest) {
         avatar_url: null,
         tier: "standard",
         compute_credits: 1000,
+        professional_role: professionalRole || null,
+        usage_intent: usageIntent || null,
+        referral_source: referralSource || null,
       }
     });
 

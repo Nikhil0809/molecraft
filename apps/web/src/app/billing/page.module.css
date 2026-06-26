@@ -1,0 +1,73 @@
+.page {
+  min-height: 100%;
+  padding: 24px;
+  position: relative;
+}
+
+.glow1, .glow2 {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow1 { width: 600px; height: 600px; background: rgba(124, 58, 237, 0.03); top: 0; left: 20%; }
+.glow2 { width: 400px; height: 400px; background: rgba(16, 185, 129, 0.03); bottom: 0; right: 10%; }
+
+.inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; }
+.title { font-size: 22px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.025em; }
+.desc { font-size: 13px; color: #6b7280; margin: 2px 0 0; }
+.sectionTitle { font-size: 15px; font-weight: 600; color: #fff; margin: 0; }
+
+/* Plan Header */
+.planHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.planName { font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 4px; }
+.planPrice { font-size: 32px; font-weight: 800; color: #fff; margin: 0; }
+.planPeriod { font-size: 14px; font-weight: 400; color: #6b7280; margin-left: 4px; }
+.planActions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+/* Usage */
+.usageGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.04); }
+@media (max-width: 559px) { .usageGrid { grid-template-columns: 1fr; } }
+.usageItem { display: flex; flex-direction: column; gap: 6px; }
+.usageTop { display: flex; justify-content: space-between; font-size: 12px; }
+.usageLabel { color: #9ca3af; }
+.usageValue { color: #6b7280; }
+.usageTrack { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
+.usageBar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7C3AED, #3B82F6); transition: width 0.3s; }
+
+/* Plans */
+.plansGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 1023px) { .plansGrid { grid-template-columns: 1fr; } }
+.popular { position: relative; border-color: rgba(124, 58, 237, 0.3); }
+.popularBadge { position: absolute; top: -10px; right: 20px; }
+.planCard { display: flex; flex-direction: column; gap: 12px; }
+.planCardName { font-size: 16px; font-weight: 700; color: #fff; margin: 0; }
+.planCardPrice { font-size: 28px; font-weight: 800; color: #fff; margin: 0; }
+.planCardPeriod { font-size: 12px; color: #6b7280; margin-left: 2px; }
+.planCardDesc { font-size: 12px; color: #6b7280; margin: 0; line-height: 1.4; }
+.planFeatures { display: flex; flex-direction: column; gap: 6px; margin: 4px 0; padding: 0; list-style: none; }
+.planFeature { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9ca3af; }
+.planBtn { margin-top: 8px; }
+
+/* Invoices */
+.invoiceList { display: flex; flex-direction: column; margin-top: 16px; }
+.invoiceHeader, .invoiceRow { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr; gap: 12px; padding: 10px 0; align-items: center; }
+.invoiceHeader { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+.invoiceRow { font-size: 13px; color: #e5e7eb; border-bottom: 1px solid rgba(255, 255, 255, 0.02); }
+.invoiceId { font-weight: 500; }
+.invoiceDate, .invoiceAmount { color: #9ca3af; }
+
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.cancelText { font-size: 14px; color: #9ca3af; line-height: 1.5; margin: 0; }

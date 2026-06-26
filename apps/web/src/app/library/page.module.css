@@ -1,0 +1,140 @@
+.page {
+  min-height: 100%;
+  padding: 24px;
+  position: relative;
+}
+
+.glow1 {
+  position: fixed;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.03);
+  filter: blur(140px);
+  top: -10%; left: 20%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow2 {
+  position: fixed;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.03);
+  filter: blur(120px);
+  bottom: -10%; right: 10%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 2px 0 0;
+}
+
+.tabs {
+  width: fit-content;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.molCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.structurePreview {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  margin: -20px -20px 12px;
+  padding: 8px;
+}
+
+.structureSvg {
+  width: 100%;
+  height: 100%;
+  max-width: 140px;
+}
+
+.molInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.molTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.molName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.molFormula {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+}
+
+.molStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex-wrap: wrap;
+}
+
+.molStat {
+  font-size: 11px;
+  color: #9ca3af;
+}

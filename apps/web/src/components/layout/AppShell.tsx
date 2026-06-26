@@ -7,6 +7,7 @@ import styles from "@/app/layout.module.css";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLanding = pathname === "/";
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   if (isLanding) {
     return <>{children}</>;
@@ -15,7 +16,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.appShell}>
       <NavSidebar />
-      <main className={styles.mainPanel}>{children}</main>
+      <div className={styles.rightPanel}>
+        <main className={styles.mainPanel}>
+          <div className={styles.ambientGlow1} />
+          <div className={styles.ambientGlow2} />
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

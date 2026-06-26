@@ -1,0 +1,24 @@
+.card {
+  background: var(--bg-surface, #0a0e1c);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.sm { padding: 12px; }
+.md { padding: 20px; }
+.lg { padding: 28px; }
+
+.hover:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:focus-visible {
+  outline: 2px solid var(--accent-primary, #6366f1);
+  outline-offset: 2px;
+}

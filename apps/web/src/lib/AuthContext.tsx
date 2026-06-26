@@ -12,6 +12,9 @@ interface User {
   avatar_url: string | null;
   tier: string;
   compute_credits: number;
+  professional_role: string | null;
+  usage_intent: string | null;
+  referral_source: string | null;
 }
 
 interface AuthContextType {
@@ -23,7 +26,10 @@ interface AuthContextType {
     password: string,
     displayName: string,
     role: string,
-    organization: string
+    organization: string,
+    professionalRole?: string,
+    usageIntent?: string,
+    referralSource?: string
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -99,14 +105,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     displayName: string,
     role: string,
-    organization: string
+    organization: string,
+    professionalRole?: string,
+    usageIntent?: string,
+    referralSource?: string
   ) => {
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, displayName, role, organization }),
+        body: JSON.stringify({ email, password, displayName, role, organization, professionalRole, usageIntent, referralSource }),
       });
 
       if (!res.ok) {

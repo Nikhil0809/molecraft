@@ -28,7 +28,7 @@ export async function createSession(userId: string, userAgent?: string, ipAddres
   return sessionId;
 }
 
-export async function verifySession(sessionId: string): Promise<{ session: { id: string; expires_at: Date }; user: { id: string; email: string; display_name: string; role: string; organization: string; avatar_url: string | null; tier: string; compute_credits: number } } | null> {
+export async function verifySession(sessionId: string): Promise<{ session: { id: string; expires_at: Date }; user: { id: string; email: string; display_name: string; role: string; organization: string; avatar_url: string | null; tier: string; compute_credits: number; professional_role: string | null; usage_intent: string | null; referral_source: string | null } } | null> {
   if (!sessionId) return null;
   
   // Find session and join with user
@@ -64,6 +64,9 @@ export async function verifySession(sessionId: string): Promise<{ session: { id:
       avatar_url: sessionUser.avatar_url,
       tier: sessionUser.tier,
       compute_credits: sessionUser.compute_credits,
+      professional_role: sessionUser.professional_role || null,
+      usage_intent: sessionUser.usage_intent || null,
+      referral_source: sessionUser.referral_source || null,
     }
   };
 }
@@ -73,7 +76,7 @@ export async function deleteSession(sessionId: string): Promise<void> {
   await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
 }
 
-export async function getCurrentUser(): Promise<{ id: string; email: string; display_name: string; role: string; organization: string; avatar_url: string | null; tier: string; compute_credits: number } | null> {
+export async function getCurrentUser(): Promise<{ id: string; email: string; display_name: string; role: string; organization: string; avatar_url: string | null; tier: string; compute_credits: number; professional_role: string | null; usage_intent: string | null; referral_source: string | null } | null> {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("molecraft_session");

@@ -14,7 +14,7 @@ import HolographicMolecule from "@/components/molecule/HolographicMolecule";
 import { DegradationRing } from "@/components/molecule/DegradationRing";
 import { CommentThread } from "@/components/canvas/CommentThread";
 import { CursorGhost } from "@/components/canvas/CursorGhost";
-import { Logo } from "@/components/logo/Logo";
+
 import { MoleculeDetailsPanel } from "@/components/molecule/MoleculeDetailsPanel";
 import type { MoleculeData } from "@/components/molecule/MoleculeCard";
 import { useWorkflowLearning } from "@/hooks/useWorkflowLearning";
@@ -439,7 +439,7 @@ export default function WorkspacePage() {
     <div className={styles.workspace}>
       <div className={styles.topBar}>
         <div className={styles.brand}>
-          <Logo size={22} />
+          <img src="/logo.png" alt="MoleCraft Logo" className={styles.logo} />
           <span className={styles.brandText}>MoleCraft <span className={styles.v5}>v5</span></span>
         </div>
 
