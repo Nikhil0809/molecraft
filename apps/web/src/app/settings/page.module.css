@@ -267,10 +267,31 @@
   background: var(--accent-primary);
   border-radius: var(--radius-md);
   transition: background var(--duration-fast) ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .saveBtn:hover {
   background: var(--accent-primary-hover);
+}
+
+.saveBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.saveSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: var(--bg-base);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Floating Success Toast */

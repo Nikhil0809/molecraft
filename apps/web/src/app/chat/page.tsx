@@ -69,10 +69,10 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modelPickerRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
-    fetchConversations();
-    fetchModels();
+    Promise.all([fetchConversations(), fetchModels()]).finally(() => setInitialLoading(false));
   }, []);
 
   useEffect(() => {
@@ -293,6 +293,16 @@ export default function ChatPage() {
     setLoading(false);
     await fetchMessages(id);
   };
+
+  if (initialLoading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.initialLoader}>
+          <div className={`${styles.spinnerCircle} ${styles.spinnerCircleLarge}`} />
+        </div>
+      </div>
+    );
+  }
 
   const hasMessages = messages.length > 0;
   const showSend = input.trim().length > 0 || files.length > 0;

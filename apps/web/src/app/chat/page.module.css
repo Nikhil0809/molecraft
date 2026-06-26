@@ -537,8 +537,22 @@
   border-width: 2px;
 }
 
+.spinnerCircleLarge {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ── Initial Loader ── */
+.initialLoader {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Suggestions */

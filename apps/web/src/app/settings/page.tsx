@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import styles from "./page.module.css";
 
 export default function SettingsPage() {
+  const [saving, setSaving] = useState(false);
   const [ragDepth, setRagDepth] = useState<"normal" | "deep" | "ultra">("deep");
   const [minMw, setMinMw] = useState(150);
   const [maxMw, setMaxMw] = useState(550);
@@ -42,6 +43,7 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
       const res = await fetch("/api/user", {
         method: "PUT",
@@ -66,6 +68,8 @@ export default function SettingsPage() {
     } catch (err) {
       console.error("Save settings error:", err);
       alert("An error occurred while saving settings.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -261,8 +265,8 @@ export default function SettingsPage() {
           <button type="button" className={styles.resetBtn} onClick={() => alert("Settings reset to enterprise defaults.")}>
             Reset Defaults
           </button>
-          <button type="submit" className={styles.saveBtn}>
-            Save Changes
+          <button type="submit" className={styles.saveBtn} disabled={saving}>
+            {saving ? <span className={styles.saveSpinner} /> : "Save Changes"}
           </button>
         </div>
       </form>
