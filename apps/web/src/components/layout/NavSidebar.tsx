@@ -7,34 +7,33 @@ import { useAuth } from "@/lib/AuthContext";
 import styles from "./NavSidebar.module.css";
 
 const CORE_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-
-  { href: "/chat", label: "AI Chat" },
-  { href: "/generate", label: "Generate" },
-  { href: "/predict", label: "Predict" },
-  { href: "/library", label: "Library" },
-  { href: "/projects", label: "Projects" },
-  { href: "/analytics", label: "Analytics" },
+  { href: "/dashboard", label: "Dashboard", icon: "fa-solid fa-chart-line" },
+  { href: "/chat", label: "AI Chat", icon: "fa-regular fa-message" },
+  { href: "/generate", label: "Generate", icon: "fa-solid fa-flask" },
+  { href: "/predict", label: "Predict", icon: "fa-solid fa-bolt" },
+  { href: "/library", label: "Library", icon: "fa-regular fa-folder-open" },
+  { href: "/projects", label: "Projects", icon: "fa-solid fa-briefcase" },
+  { href: "/analytics", label: "Analytics", icon: "fa-solid fa-chart-simple" },
 ];
 
 const OMNI_ITEMS = [
-  { href: "/omics", label: "Omics Discovery" },
-  { href: "/antibody", label: "Antibody Design" },
-  { href: "/protac", label: "PROTAC Design" },
-  { href: "/rna", label: "RNA Design" },
-  { href: "/peptide", label: "Peptide Design" },
-  { href: "/clinical", label: "Clinical Trials" },
-  { href: "/lab", label: "Lab Automation" },
-  { href: "/patent", label: "Patent IP" },
-  { href: "/simulation", label: "Simulation" },
+  { href: "/omics", label: "Omics Discovery", icon: "fa-solid fa-dna" },
+  { href: "/antibody", label: "Antibody Design", icon: "fa-solid fa-shield-virus" },
+  { href: "/protac", label: "PROTAC Design", icon: "fa-solid fa-atom" },
+  { href: "/rna", label: "RNA Design", icon: "fa-solid fa-circle-notch" },
+  { href: "/peptide", label: "Peptide Design", icon: "fa-solid fa-vial" },
+  { href: "/clinical", label: "Clinical Trials", icon: "fa-solid fa-stethoscope" },
+  { href: "/lab", label: "Lab Automation", icon: "fa-solid fa-robot" },
+  { href: "/patent", label: "Patent IP", icon: "fa-solid fa-certificate" },
+  { href: "/simulation", label: "Simulation", icon: "fa-solid fa-cubes" },
 ];
 
 const WORKSPACE_ITEMS = [
-  { href: "/history", label: "History" },
-  { href: "/notifications", label: "Notifications" },
-  { href: "/team", label: "Team" },
-  { href: "/billing", label: "Billing" },
-  { href: "/help", label: "Help Center" },
+  { href: "/history", label: "History", icon: "fa-regular fa-clock" },
+  { href: "/notifications", label: "Notifications", icon: "fa-regular fa-bell" },
+  { href: "/team", label: "Team", icon: "fa-solid fa-users" },
+  { href: "/billing", label: "Billing", icon: "fa-regular fa-credit-card" },
+  { href: "/help", label: "Help Center", icon: "fa-regular fa-circle-question" },
 ];
 
 export function NavSidebar() {
@@ -46,9 +45,9 @@ export function NavSidebar() {
   const popupRef = useRef<HTMLDivElement>(null);
   const userCardRef = useRef<HTMLDivElement>(null);
   const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/";
-  if (isAuthPage) return null;
 
   useEffect(() => {
+    if (isAuthPage) return;
     const handler = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node) &&
           userCardRef.current && !userCardRef.current.contains(e.target as Node)) {
@@ -59,22 +58,26 @@ export function NavSidebar() {
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
     }
-  }, [showProfile]);
+  }, [showProfile, isAuthPage]);
 
   useEffect(() => {
+    if (isAuthPage) return;
     if (showProfile && userCardRef.current) {
       const rect = userCardRef.current.getBoundingClientRect();
       setPopupPos({ bottom: window.innerHeight - rect.top, left: rect.left + 8, width: rect.width - 16 });
     }
-  }, [showProfile]);
+  }, [showProfile, isAuthPage]);
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => {
+  if (isAuthPage) return null;
+
+  const NavLink = ({ href, label, icon }: { href: string; label: string; icon: string }) => {
     const isActive = pathname === href || pathname?.startsWith(href + "/");
     return (
       <Link
         href={href}
         className={`${styles.navItem} ${isActive ? styles.active : ""}`}
       >
+        <i className={icon}></i>
         <span className={styles.navLabel}>{label}</span>
       </Link>
     );

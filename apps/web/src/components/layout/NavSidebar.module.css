@@ -132,6 +132,7 @@
 .navItem {
   display: flex;
   align-items: center;
+  gap: 10px;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -146,6 +147,19 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.navItem i {
+  font-size: 13px;
+  width: 16px;
+  text-align: center;
+  color: #6b7280;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.navItem:hover i {
+  color: #ffffff;
+}
+
 .navItem.active {
   background: linear-gradient(90deg, rgba(124, 58, 237, 0.12) 0%, transparent 100%);
   border-left: 2px solid #7C3AED;
@@ -153,6 +167,10 @@
   font-weight: 600;
   border-radius: 0 8px 8px 0;
   padding-left: 10px;
+}
+
+.navItem.active i {
+  color: #7C3AED;
 }
 
 .navLabel {

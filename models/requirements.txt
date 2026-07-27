@@ -1,6 +1,19 @@
+-r admet_ml/requirements.txt
 -r affinity_predictor/requirements.txt
--r generative/requirements.txt
--r rag_pipeline/requirements.txt
+-r antibody_design/requirements.txt
+-r clinical_trial/requirements.txt
 -r docking/requirements.txt
+-r foundation_models/requirements.txt
+-r generative/requirements.txt
+-r ingestion_service/requirements.txt
+-r lab_automation/requirements.txt
+-r molecule_qa/requirements.txt
+-r omics_discovery/requirements.txt
+-r patent_ip/requirements.txt
+-r peptide_design/requirements.txt
+-r physics_sim/requirements.txt
+-r protac_design/requirements.txt
 -r proteochem/requirements.txt
+-r rag_pipeline/requirements.txt
+-r rna_design/requirements.txt
 httpx==0.27.2

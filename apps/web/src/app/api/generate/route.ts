@@ -9,11 +9,12 @@ const GENERATIVE_API_URL = process.env.GENERATIVE_API_URL || "http://localhost:8
 async function callRagPipeline(query: string, depth: string, citationTier: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
+  const pubmedApiKey = process.env.PUBMED_API_KEY || "";
   try {
     const resp = await fetch(`${RAG_API_URL}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, depth, citation_tier: citationTier }),
+      body: JSON.stringify({ query, depth, citation_tier: citationTier, pubmed_api_key: pubmedApiKey }),
       signal: controller.signal,
     });
     if (resp.ok) return await resp.json();

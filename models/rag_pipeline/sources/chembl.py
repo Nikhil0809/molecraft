@@ -98,7 +98,7 @@ async def search(query: str, depth: str = "normal") -> dict:
             title = f"{act['molecule_chembl_id']}: {act['standard_type']} = {val_str}"
             citations.append({
                 "source": "ChEMBL", "title": title, "year": 2024,
-                "url": f"https://www.ebi.ac.uk/chembl/assay_report_card/{act['molecule_chembl_id']}/",
+                "url": f"https://www.ebi.ac.uk/chembl/explore/target/{target_id}",
                 "tier": 1,
             })
             all_results.append(act)
@@ -116,13 +116,13 @@ async def search(query: str, depth: str = "normal") -> dict:
             })
             all_results.append(c)
 
-    # Try 3: Fallback — return generic citation about the target
+    # Try 3: Fallback — return search URL for the query
     if not citations:
         citations.append({
             "source": "ChEMBL",
             "title": f"Search results for '{query}' — ChEMBL target database",
             "year": 2024,
-            "url": f"https://www.ebi.ac.uk/chembl/",
+            "url": f"https://www.ebi.ac.uk/chembl/explore/target?search={query}",
             "tier": 1,
         })
 

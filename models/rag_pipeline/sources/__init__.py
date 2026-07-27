@@ -3,3 +3,7 @@ from . import pubmed
 from . import pubchem
 from . import uniprot
 from . import tavily
+from . import patent
+from . import clinical_trials
+from . import wikipedia
+from . import web_search

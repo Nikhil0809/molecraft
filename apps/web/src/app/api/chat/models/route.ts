@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
 const FALLBACK_MODELS = [
-  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", best: true },
-  { id: "anthropic/claude-3-opus", name: "Claude 3 Opus", provider: "Anthropic" },
-  { id: "openai/gpt-4o", name: "GPT-4o", provider: "OpenAI" },
-  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku", provider: "Anthropic" },
-  { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic" },
-  { id: "google/gemini-2.0-flash-001", name: "Gemini 2.0 Flash", provider: "Google" },
-  { id: "google/gemini-2.0-pro-exp-02-05", name: "Gemini 2.0 Pro", provider: "Google" },
-  { id: "meta-llama/llama-3.1-8b-instruct", name: "Llama 3.1 8B", provider: "Meta" },
-  { id: "mistralai/mistral-7b-instruct", name: "Mistral 7B", provider: "Mistral" },
-  { id: "deepseek/deepseek-chat", name: "DeepSeek V3", provider: "DeepSeek" },
-  { id: "qwen/qwen-2.5-72b-instruct", name: "Qwen 2.5 72B", provider: "Qwen" },
+  { id: "tinyllama:latest", name: "TinyLlama", provider: "Ollama (Local)", best: true },
+  { id: "qwen3-fast:latest", name: "Qwen3 Fast", provider: "Ollama (Local)" },
+  { id: "qwen3:8b", name: "Qwen3 8B", provider: "Ollama (Local)" },
+  { id: "kimi-k2.5:cloud", name: "Kimi K2.5", provider: "Moonshot (Cloud)" },
 ];
 
 let cachedModels: { id: string; name: string; provider: string; best?: boolean }[] | null = null;
@@ -26,24 +19,26 @@ export async function GET() {
   }
 
   try {
-    const resp = await fetch("https://openrouter.ai/api/v1/models", {
-      headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}` },
-      signal: AbortSignal.timeout(10000),
+    const resp = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+      signal: AbortSignal.timeout(5000),
     });
 
     if (resp.ok) {
       const data = await resp.json();
-      const models = (data.data || [])
-        .filter((m: any) => {
-          const id = m.id as string;
-          return !id.includes(":free") && !id.includes(":beta") && !id.match(/n?:nightly/);
-        })
-        .map((m: any) => ({
-          id: m.id,
-          name: m.name || m.id,
-          provider: m?.pricing?.provider || "Unknown",
-          best: m.id === "openai/gpt-4o-mini" ? true : undefined,
-        }));
+      const models = (data.models || [])
+        .filter((m: any) => !m.name.includes("embed"))
+        .map((m: any) => {
+          const name = m.name.replace(":latest", "");
+          const isFast = name.includes("fast");
+          return {
+            id: m.name,
+            name: isFast ? `${name.replace("-fast", " Fast")}` : name,
+            provider: m.details?.family
+              ? `Ollama (${m.details.family})`
+              : "Ollama (Local)",
+            best: m.name === "tinyllama:latest" ? true : undefined,
+          };
+        });
 
       if (models.length > 0) {
         cachedModels = models;
@@ -51,7 +46,7 @@ export async function GET() {
         return NextResponse.json({ models });
       }
     }
-  } catch { /* fall through */ }
+  } catch {}
 
   cachedModels = FALLBACK_MODELS;
   cacheTimestamp = Date.now();

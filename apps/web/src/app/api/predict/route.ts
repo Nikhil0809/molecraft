@@ -5,7 +5,20 @@ import crypto from "crypto";
 
 const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:8001";
 
-async function callAffinityModel(smiles: string, targetProtein: string) {
+type AffinityResult = {
+  affinity: number;
+  ciLow: number;
+  ciHigh: number;
+  validationMethod: string;
+  featureScores: Record<string, number>;
+  predictionMs: number;
+};
+
+type AffinityError = {
+  error: string;
+};
+
+async function callAffinityModel(smiles: string, targetProtein: string): Promise<AffinityResult | AffinityError | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -28,13 +41,14 @@ async function callAffinityModel(smiles: string, targetProtein: string) {
         predictionMs: data.prediction_ms,
       };
     }
+
+    const errBody = await resp.json().catch(() => ({}));
+    return { error: errBody.detail || `Model returned status ${resp.status}` };
   } catch {
     return null;
   } finally {
     clearTimeout(timeout);
   }
-
-  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -91,6 +105,36 @@ export async function POST(req: NextRequest) {
         status: "failed",
         error: "Affinity prediction service unavailable. Ensure models are running."
       }, { status: 503 });
+    }
+
+    if ("error" in result) {
+      await sql`
+        INSERT INTO predictions (
+          id, user_id, conversation_id, smiles, target_protein,
+          affinity_nm, ci_low, ci_high, validation_method,
+          feature_scores, prediction_ms, status, error_message, created_at
+        )
+        VALUES (
+          ${predictionId},
+          ${userId},
+          ${conversationId || null},
+          ${cleanSmiles},
+          ${targetProtein},
+          null, null, null,
+          'rdkit-syntax-validator',
+          null,
+          50,
+          'failed',
+          ${result.error},
+          NOW()
+        )
+      `;
+
+      return NextResponse.json({
+        id: predictionId,
+        status: "failed",
+        error: result.error,
+      }, { status: 400 });
     }
 
     await sql`

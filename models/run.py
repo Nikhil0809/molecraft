@@ -6,6 +6,8 @@ import os
 AFFINITY_PORT = 8001
 GENERATIVE_PORT = 8000
 RAG_PORT = 8002
+MOLECULE_QA_PORT = 8007
+INGESTION_PORT = 8011
 
 processes = []
 
@@ -31,6 +33,8 @@ services = [
     ("affinity_predictor", AFFINITY_PORT),
     ("generative", GENERATIVE_PORT),
     ("rag_pipeline", RAG_PORT),
+    ("molecule_qa", MOLECULE_QA_PORT),
+    ("ingestion_service", INGESTION_PORT),
 ]
 
 for name, port in services:

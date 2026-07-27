@@ -1,5 +1,5 @@
 import styles from "./CitationPanel.module.css";
-import { CitationGroup } from "./CitationGroup";
+import { CitationItem } from "./CitationItem";
 
 export interface Citation {
   id: string;
@@ -7,6 +7,7 @@ export interface Citation {
   title: string;
   year?: number;
   url?: string;
+  domain?: string;
   tier: 1 | 2 | 3;
 }
 
@@ -14,15 +15,21 @@ interface CitationPanelProps {
   citations: Citation[];
 }
 
-export function CitationPanel({ citations }: CitationPanelProps) {
-  const tier1 = citations.filter((c) => c.tier === 1);
-  const tier2 = citations.filter((c) => c.tier === 2);
-  const tier3 = citations.filter((c) => c.tier === 3);
+const TIER_COLORS: Record<number, { source: string; bg: string; border: string }> = {
+  1: { source: "text-indigo-400", bg: "bg-[#1e1b4b]/50", border: "border-[#312e81]/30" },
+  2: { source: "text-amber-400", bg: "bg-[#1e1b4b]/50", border: "border-[#312e81]/30" },
+  3: { source: "text-emerald-400", bg: "bg-[#1e1b4b]/50", border: "border-[#312e81]/30" },
+};
 
+export function CitationPanel({ citations }: CitationPanelProps) {
   if (citations.length === 0) {
     return (
       <div className={styles.panel}>
-        <h3 className={styles.heading}>Citations</h3>
+        <div className={styles.header}>
+          <h2 className={styles.heading}>
+            Citations
+          </h2>
+        </div>
         <div className={styles.empty}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <rect x="6" y="4" width="20" height="24" rx="3" stroke="currentColor" strokeWidth="1.5"/>
@@ -37,36 +44,24 @@ export function CitationPanel({ citations }: CitationPanelProps) {
 
   return (
     <div className={styles.panel}>
-      <h3 className={styles.heading}>
-        Citations
-        <span className={styles.count}>{citations.length}</span>
-      </h3>
+      <div className={styles.header}>
+        <h2 className={styles.heading}>
+          Citations
+          <span className={styles.count}>{citations.length}</span>
+        </h2>
+        <span className={styles.peerBadge}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M4 7L6 9L10 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Peer-reviewed
+        </span>
+      </div>
 
-      {tier1.length > 0 && (
-        <CitationGroup
-          tier={1}
-          label="Peer-reviewed"
-          citations={tier1}
-        />
-      )}
-
-      {tier2.length > 0 && (
-        <CitationGroup
-          tier={2}
-          label="Preprint"
-          warning="Not peer reviewed"
-          citations={tier2}
-        />
-      )}
-
-      {tier3.length > 0 && (
-        <CitationGroup
-          tier={3}
-          label="Web"
-          sublabel="Supplementary context only"
-          citations={tier3}
-        />
-      )}
+      <div className={styles.list}>
+        {citations.map((c) => (
+          <CitationItem key={c.id} citation={c} />
+        ))}
+      </div>
     </div>
   );
 }

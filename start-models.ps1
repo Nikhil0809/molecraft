@@ -9,6 +9,7 @@ $services = @(
     @{Name="Affinity Predictor"; Port=8001; Dir="models\affinity_predictor"},
     @{Name="Molecule Generator"; Port=8000; Dir="models\generative"},
     @{Name="RAG Pipeline"; Port=8002; Dir="models\rag_pipeline"},
+    @{Name="Molecule Q&A"; Port=8007; Dir="models\molecule_qa"},
     @{Name="Docking"; Port=8003; Dir="models\docking"},
     @{Name="Proteochem"; Port=8004; Dir="models\proteochem"}
 )

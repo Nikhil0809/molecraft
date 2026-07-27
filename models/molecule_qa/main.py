@@ -1,44 +1,38 @@
 import os
-import re
+import json
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 import httpx
 
-app = FastAPI(title="MoleCraft Molecule Q&A", version="1.0.0")
+from chemistry_filter import is_chemistry_related
+
+app = FastAPI(title="MoleCraft Molecule Q&A", version="3.0.0")
 
 RAG_API_URL = os.environ.get("RAG_API_URL", "http://localhost:8002")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "mixtral-8x7b-32768")
 
 
 class QnARequest(BaseModel):
     query: str = Field(..., description="User's question about molecules")
     context: str = Field("", description="RAG context to ground the answer")
+    model: str = Field("", description="Groq model to use")
 
 
 class QnAResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
     answer: str
     confidence: str = "high"
-
-
-MOLECULE_PATTERNS = {
-    r"\bCDK[24]/?6\b": "CDK4/6 inhibitors are used in cancer therapy. Key compounds include palbociclib, ribociclib, and abemaciclib.",
-    r"\bPROTAC\b": "PROTACs (Proteolysis Targeting Chimeras) are bifunctional molecules that degrade target proteins via the ubiquitin-proteasome system.",
-    r"\bEGFR\b": "EGFR (Epidermal Growth Factor Receptor) inhibitors include gefitinib, erlotinib, and osimertinib for NSCLC treatment.",
-    r"\bADMET\b": "ADMET covers Absorption, Distribution, Metabolism, Excretion, and Toxicity — key properties for drug candidate evaluation.",
-    r"\bSMILES\b": "SMILES (Simplified Molecular Input Line Entry System) is a notation for encoding molecular structures as ASCII strings.",
-    r"\bmolecular dynamics\b": "Molecular dynamics (MD) simulations model atomic movements over time to study protein-ligand interactions.",
-    r"\bdocking\b": "Molecular docking predicts the preferred orientation of a ligand when bound to a target protein.",
-    r"\bQSAR\b": "QSAR (Quantitative Structure-Activity Relationship) models predict biological activity from molecular structure.",
-    r"\bIC5[0]\b": "IC50 is the half-maximal inhibitory concentration — a measure of a compound's potency against a target.",
-    r"\bbiologics?\b": "Biologics are large-molecule drugs (antibodies, proteins) produced from living organisms.",
-}
+    chemistry_score: float = 0.0
+    model_used: str = ""
 
 
 def _get_rag_context(query: str) -> str:
     try:
-        with httpx.Client(timeout=15) as client:
+        with httpx.Client(timeout=20) as client:
             resp = client.post(
                 f"{RAG_API_URL}/search",
-                json={"query": query, "depth": "normal", "citation_tier": "all"},
+                json={"query": query, "depth": "normal", "citation_tier": "t1_t2"},
             )
             if resp.is_success:
                 data = resp.json()
@@ -47,7 +41,7 @@ def _get_rag_context(query: str) -> str:
                 parts = []
                 for s in sources:
                     parts.append(f"[Source: {s['name']}] {s['message']}")
-                for c in citations[:5]:
+                for c in citations[:8]:
                     parts.append(f"[{c['source']}] {c['title']} ({c['year']})")
                 return "\n".join(parts)
     except Exception:
@@ -55,39 +49,115 @@ def _get_rag_context(query: str) -> str:
     return ""
 
 
-def _generate_answer(query: str, context: str) -> str:
-    for pattern, answer in MOLECULE_PATTERNS.items():
-        if re.search(pattern, query, re.IGNORECASE):
-            if context:
-                return f"{answer}\n\nRelated research:\n{context}"
-            return answer
+def _get_semantic_context(query: str) -> str:
+    try:
+        with httpx.Client(timeout=15) as client:
+            resp = client.post(
+                f"{RAG_API_URL}/semantic-search",
+                json={"query": query, "n_results": 8},
+            )
+            if resp.is_success:
+                data = resp.json()
+                results = data.get("results", [])
+                parts = []
+                for i, r in enumerate(results[:8]):
+                    text = r.get("text", "")
+                    meta = r.get("metadata", {})
+                    source = meta.get("source", "ChromaDB")
+                    score = r.get("distance", 0)
+                    parts.append(f"[{i+1}] {source} (score: {score:.3f}): {text}")
+                return "\n\n".join(parts)
+    except Exception:
+        pass
+    return ""
 
-    if context and "Source:" in context:
-        return (
-            f"Based on available molecular databases, here's what I found:\n\n"
-            f"{context}\n\n"
-            f"For more detailed information, try specifying a target protein, SMILES, or disease."
-        )
 
-    return (
-        "I can help answer questions about molecular design, drug discovery, and computational chemistry. "
-        "Try asking about specific targets (e.g., EGFR, CDK4/6), concepts (PROTAC, docking, ADMET), "
-        "or molecules using SMILES notation."
+def _call_groq(query: str, context: str, model: str) -> str:
+    if not GROQ_API_KEY:
+        return "Groq API key not configured. Set GROQ_API_KEY environment variable."
+
+    model_name = model or GROQ_MODEL
+
+    system_prompt = (
+        "You are MoleCraft AI, a precise scientific assistant specialized in molecular design, "
+        "drug discovery, and computational chemistry. Answer concisely and accurately based on "
+        "the research context provided. Cite sources where relevant. If the context doesn't have "
+        "enough information, say so and provide your best scientific knowledge."
     )
+
+    user_prompt = query
+    if context:
+        user_prompt = f"Research Context:\n{context}\n\nQuestion: {query}"
+
+    try:
+        with httpx.Client(timeout=60) as client:
+            payload = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0,
+                "max_tokens": 2048,
+            }
+            resp = client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            if resp.is_success:
+                data = resp.json()
+                return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"[MoleculeQA] Groq error: {e}")
+
+    return ""
 
 
 @app.post("/qna", response_model=QnAResponse)
-async def qna(req: QnARequest) -> QnAResponse:
-    context = req.context
+async def qna(req: QnAResponse) -> QnAResponse:
+    is_chem, score, reason = is_chemistry_related(req.query)
+    if not is_chem:
+        return QnAResponse(
+            answer="I specialize in chemistry, molecular design, and drug discovery topics. "
+                   f"Your question doesn't appear to be chemistry-related. "
+                   f"Please ask about molecules, drugs, targets, or related scientific topics.",
+            confidence="low",
+            chemistry_score=score,
+            model_used="filter",
+        )
 
+    context = req.context
     if not context:
         rag_context = _get_rag_context(req.query)
-        context = rag_context
+        semantic_context = _get_semantic_context(req.query)
+        combined = []
+        if rag_context:
+            combined.append("=== Database Sources ===\n" + rag_context)
+        if semantic_context:
+            combined.append("=== Semantic Search Results ===\n" + semantic_context)
+        context = "\n\n".join(combined)
 
-    answer = _generate_answer(req.query, context)
-    return QnAResponse(answer=answer)
+    model = req.model or GROQ_MODEL
+    answer = _call_groq(req.query, context, model)
+
+    if not answer:
+        answer = (
+            f"I searched across molecular databases for '{req.query}' but couldn't "
+            f"generate a complete answer. Try rephrasing or providing more details."
+        )
+
+    return QnAResponse(
+        answer=answer,
+        confidence="high" if context else "medium",
+        chemistry_score=score,
+        model_used=model,
+    )
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "model": GROQ_MODEL, "groq_configured": bool(GROQ_API_KEY)}

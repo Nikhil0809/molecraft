@@ -1,5 +1,6 @@
 import copy
 import math
+import os
 import random
 import uuid
 from typing import Optional
@@ -15,7 +16,7 @@ RDLogger.logger().setLevel(RDLogger.ERROR)
 
 app = FastAPI(title="MoleCraft Molecule Generator", version="3.0.0")
 
-AFFINITY_API_URL = "http://localhost:8001"
+AFFINITY_API_URL = os.environ.get("AFFINITY_API_URL", "http://localhost:8001")
 
 try:
     from vae_model import load_vae, build_vocab, generate_from_vae, TORCH_AVAILABLE as VAE_AVAILABLE

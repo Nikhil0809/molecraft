@@ -37,10 +37,14 @@ services:
       - PYTHONUNBUFFERED=1
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - PUBMED_API_KEY=${PUBMED_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - INGESTION_API_URL=http://ingestion-service:8011
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8002
     working_dir: /app/models/rag_pipeline
     volumes:
       - ./models:/app/models
+    depends_on:
+      - ingestion-service
 
   docking:
     build:
@@ -68,6 +72,47 @@ services:
     working_dir: /app/models/proteochem
     volumes:
       - ./models:/app/models
+
+  molecule-qa:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8007:8007"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RAG_API_URL=http://rag-pipeline:8002
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-mixtral-8x7b-32768}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8007
+    working_dir: /app/models/molecule_qa
+    volumes:
+      - ./models:/app/models
+    depends_on:
+      - rag-pipeline
+
+  ingestion-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+    ports:
+      - "8011:8011"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CHROMA_DIR=/data/chroma
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-local}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      - CHROMA_HOST=${CHROMA_HOST:-api.trychroma.com}
+      - CHROMA_TENANT=${CHROMA_TENANT:-6ad925cb-038a-4521-9232-58abdf13c5f5}
+      - CHROMA_DATABASE=${CHROMA_DATABASE:-molecraft}
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-molecraft}
+      - CHROMA_API_KEY=${CHROMA_API_KEY:-}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8011
+    working_dir: /app/models/ingestion_service
+    volumes:
+      - ./models:/app/models
+      - chroma_data:/data/chroma
 
   foundation-models:
     build:
@@ -229,6 +274,14 @@ services:
       - PROTEO_API_URL=http://proteochem:8004
       - FOUNDATION_API_URL=http://foundation-models:8005
       - ADMET_API_URL=http://admet-ml:8006
+      - MOLECULE_QA_API_URL=http://molecule-qa:8007
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - INGESTION_API_URL=http://ingestion-service:8011
+      - CHROMA_HOST=${CHROMA_HOST:-api.trychroma.com}
+      - CHROMA_TENANT=${CHROMA_TENANT:-6ad925cb-038a-4521-9232-58abdf13c5f5}
+      - CHROMA_DATABASE=${CHROMA_DATABASE:-molecraft}
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-molecraft}
+      - CHROMA_API_KEY=${CHROMA_API_KEY:-}
       - OMICS_API_URL=http://omics-discovery:8010
       - ANTIBODY_API_URL=http://antibody-design:8020
       - PROTAC_API_URL=http://protac-design:8021
@@ -241,7 +294,9 @@ services:
     depends_on:
       - affinity-predictor
       - molecule-generator
+      - molecule-qa
       - rag-pipeline
+      - ingestion-service
       - docking
       - proteochem
       - foundation-models
@@ -255,3 +310,6 @@ services:
       - lab-automation
       - physics-sim
       - patent-ip
+
+volumes:
+  chroma_data:

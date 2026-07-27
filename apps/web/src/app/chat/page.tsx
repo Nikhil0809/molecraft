@@ -52,6 +52,30 @@ const SUGGESTIONS_BY_COUNT = [
   ],
 ];
 
+const getProviderIcon = (provider: string) => {
+  const p = provider.toLowerCase();
+  if (p.includes("openai")) return "fa-solid fa-sparkles";
+  if (p.includes("anthropic")) return "fa-solid fa-brain";
+  if (p.includes("google")) return "fa-solid fa-gem";
+  if (p.includes("meta")) return "fa-solid fa-infinity";
+  if (p.includes("deepseek")) return "fa-solid fa-compass";
+  if (p.includes("mistral")) return "fa-solid fa-wind";
+  if (p.includes("qwen")) return "fa-solid fa-robot";
+  if (p.includes("sakana")) return "fa-solid fa-fish";
+  return "fa-solid fa-microchip";
+};
+
+const getSuggestionIcon = (text: string) => {
+  const t = text.toLowerCase();
+  if (t.includes("design")) return "fa-solid fa-compass-drafting";
+  if (t.includes("explain")) return "fa-regular fa-circle-question";
+  if (t.includes("compare")) return "fa-solid fa-code-compare";
+  if (t.includes("route") || t.includes("synthetic")) return "fa-solid fa-route";
+  if (t.includes("analyze") || t.includes("admet")) return "fa-solid fa-magnifying-glass-chart";
+  if (t.includes("advance") || t.includes("simulation")) return "fa-solid fa-arrow-trend-up";
+  return "fa-regular fa-lightbulb";
+};
+
 export default function ChatPage() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -62,7 +86,7 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [files, setFiles] = useState<ChatFile[]>([]);
   const [models, setModels] = useState<ModelOption[]>([]);
-  const [selectedModel, setSelectedModel] = useState("openai/gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState("qwen3-fast:latest");
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -92,6 +116,10 @@ export default function ChatPage() {
         const data = await res.json();
         if (data.models?.length > 0) {
           setModels(data.models);
+          const defaultM = data.models.find((m: any) => m.best) || data.models[0];
+          if (defaultM) {
+            setSelectedModel(defaultM.id);
+          }
         }
       }
     } catch {}
@@ -294,16 +322,6 @@ export default function ChatPage() {
     await fetchMessages(id);
   };
 
-  if (initialLoading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.initialLoader}>
-          <div className={`${styles.spinnerCircle} ${styles.spinnerCircleLarge}`} />
-        </div>
-      </div>
-    );
-  }
-
   const hasMessages = messages.length > 0;
   const showSend = input.trim().length > 0 || files.length > 0;
 
@@ -324,7 +342,10 @@ export default function ChatPage() {
       <div className={styles.historyList}>
         <p className={styles.historySectionTitle}>Recent</p>
         {conversations.length === 0 && (
-          <p className={styles.noHistory}>No conversations yet</p>
+          <p className={styles.noHistory}>
+            <i className="fa-solid fa-comment-slash" style={{ marginRight: "6px", opacity: 0.6 }}></i>
+            No conversations yet
+          </p>
         )}
         {conversations.map((conv) => (
           <div
@@ -339,7 +360,7 @@ export default function ChatPage() {
               onClick={(e) => deleteConversation(e, conv.id)}
               title="Delete"
             >
-              <i className="fa-regular fa-xmark"></i>
+              <i className="fa-solid fa-xmark"></i>
             </button>
           </div>
         ))}
@@ -354,7 +375,7 @@ export default function ChatPage() {
           <div key={msg.id} className={`${styles.message} ${msg.role === "user" ? styles.messageUser : styles.messageAI}`}>
             {msg.role === "assistant" && (
               <div className={styles.msgAvatar}>
-                <i className="fa-solid fa-sparkles"></i>
+                <img src="/logo.png" className={styles.msgAvatarImg} alt="AI" />
               </div>
             )}
             <div className={styles.msgBubble}>
@@ -367,11 +388,11 @@ export default function ChatPage() {
         ))}
         {loading && (
           <div className={`${styles.message} ${styles.messageAI}`}>
-            <div className={styles.msgAvatar}>
-              <i className="fa-solid fa-sparkles"></i>
+            <div className={`${styles.msgAvatar} ${styles.msgAvatarThinking}`}>
+              <img src="/logo.png" className={styles.msgAvatarImg} alt="AI" />
             </div>
             <div className={styles.msgBubble}>
-              <div className={styles.spinnerCircle} />
+              <div className={styles.thinkingText}>Thinking...</div>
             </div>
           </div>
         )}
@@ -382,228 +403,252 @@ export default function ChatPage() {
 
   return (
     <div className={styles.page}>
-      {sidebar}
-
-      <div className={styles.chatArea}>
-        {hasMessages ? (
-          <>
-            <header className={styles.chatHeader}>
-              {!sidebarOpen && (
-                <button className={styles.openSidebarBtn} onClick={() => setSidebarOpen(true)} title="Open sidebar">
-                  <i className="fa-solid fa-bars"></i>
-                </button>
-              )}
-              <div className={styles.chatHeaderSpacer} />
-              <div className={styles.modelPicker} ref={modelPickerRef}>
-                <button
-                  className={styles.modelPickerBtn}
-                  onClick={() => setModelPickerOpen(!modelPickerOpen)}
-                >
-                  <i className="fa-regular fa-microchip"></i>
-                  <span>{models.find((m) => m.id === selectedModel)?.name || "GPT-4o Mini"}</span>
-                  <i className="fa-regular fa-chevron-down"></i>
-                </button>
-                {modelPickerOpen && (
-                  <div className={styles.modelPickerDropdown}>
-                    {models.map((m) => (
-                      <button
-                        key={m.id}
-                        className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
-                        onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
-                      >
-                        <span className={styles.modelOptionName}>
-                          {m.name}
-                          {m.best && <span className={styles.modelBestBadge}>Best</span>}
-                        </span>
-                        <span className={styles.modelOptionProvider}>{m.provider}</span>
-                        {m.id === selectedModel && <i className="fa-regular fa-check"></i>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button className={styles.editBtn}>
-                <i className="fa-regular fa-pen-to-square"></i>
-              </button>
-            </header>
-
-            {messageList}
-
-            <div className={styles.inputFooter}>
-              <div className={styles.inputBox}>
-                {files.length > 0 && (
-                  <div className={styles.filePreviews}>
-                    {files.map((f) => (
-                      <div key={f.id} className={styles.fileChip}>
-                        <i className={f.type.startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file"}></i>
-                        <span className={styles.fileChipName}>{f.name}</span>
-                        <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)}>
-                          <i className="fa-regular fa-xmark"></i>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.inputRow}>
-                  <button className={styles.inputActionBtn} onClick={() => fileInputRef.current?.click()} title="Attach file">
-                    <i className="fa-regular fa-plus"></i>
+      {initialLoading ? (
+        <div className={styles.initialLoader}>
+          <div className={`${styles.spinnerCircle} ${styles.spinnerCircleLarge}`} />
+        </div>
+      ) : (
+        <>
+          {sidebar}
+          <div className={styles.chatArea}>
+            {hasMessages ? (
+              <>
+                <header className={styles.chatHeader}>
+                  {!sidebarOpen && (
+                    <button className={styles.openSidebarBtn} onClick={() => setSidebarOpen(true)} title="Open sidebar">
+                      <i className="fa-solid fa-bars"></i>
+                    </button>
+                  )}
+                  <div className={styles.chatHeaderSpacer} />
+                  <button className={styles.editBtn} onClick={newConversation} title="New chat">
+                    <i className="fa-regular fa-pen-to-square"></i>
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".txt,.pdf,.csv,.png,.jpg,.jpeg,.gif,.smiles,.sdf,.mol"
-                    className={styles.hiddenInput}
-                    onChange={handleFileSelect}
-                  />
-                  <textarea
-                    ref={inputRef}
-                    className={styles.inputField}
-                    placeholder="Ask MoleCraft AI"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    rows={1}
-                  />
-                  <div className={styles.inputActionsRight}>
-                    {loading ? (
-                      <button className={styles.stopBtn} onClick={stopGeneration} title="Stop">
-                        <i className="fa-solid fa-square"></i>
-                      </button>
-                    ) : showSend ? (
-                      <button className={styles.sendBtn} onClick={handleSubmit} title="Send">
-                        <i className="fa-solid fa-arrow-up"></i>
-                      </button>
-                    ) : (
-                      <button className={styles.micBtn} title="Voice input">
-                        <i className="fa-regular fa-microphone"></i>
-                      </button>
+                </header>
+
+                {messageList}
+
+                <div className={styles.inputFooter}>
+                  <div className={styles.inputBox}>
+                    {files.length > 0 && (
+                      <div className={styles.filePreviews}>
+                        {files.map((f) => (
+                          <div key={f.id} className={styles.fileChip}>
+                            <i className={f.type.startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file"}></i>
+                            <span className={styles.fileChipName}>{f.name}</span>
+                            <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)}>
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
+                    <textarea
+                      ref={inputRef}
+                      className={styles.inputField}
+                      placeholder="Write a message..."
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      rows={1}
+                    />
+                    <div className={styles.inputToolbar}>
+                      <div className={styles.inputToolbarLeft}>
+                        <button className={styles.inputActionBtn} onClick={() => fileInputRef.current?.click()} title="Attach file">
+                          <i className="fa-regular fa-plus"></i>
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept=".txt,.pdf,.csv,.png,.jpg,.jpeg,.gif,.smiles,.sdf,.mol"
+                          className={styles.hiddenInput}
+                          onChange={handleFileSelect}
+                        />
+                      </div>
+                      <div className={styles.inputActionsRight}>
+                        <div className={styles.modelPicker} ref={modelPickerRef}>
+                          <button
+                            className={styles.modelPickerBtn}
+                            onClick={() => setModelPickerOpen(!modelPickerOpen)}
+                          >
+                            <span>{models.find((m) => m.id === selectedModel)?.name || "GPT-4o Mini"}</span>
+                            <i className="fa-solid fa-chevron-down"></i>
+                          </button>
+                          {modelPickerOpen && (
+                            <div className={styles.modelPickerDropdown}>
+                              {models.map((m) => (
+                                <button
+                                  key={m.id}
+                                  className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
+                                  onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
+                                >
+                                  <span className={styles.modelOptionName}>
+                                    {m.name}
+                                    {m.best && <span className={styles.modelBestBadge}>Best</span>}
+                                  </span>
+                                  {m.id === selectedModel && <i className="fa-solid fa-check"></i>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {loading ? (
+                          <button className={styles.stopBtn} onClick={stopGeneration} title="Stop">
+                            <i className="fa-solid fa-square"></i>
+                          </button>
+                        ) : showSend ? (
+                          <button className={styles.sendBtn} onClick={handleSubmit} title="Send">
+                            <i className="fa-solid fa-arrow-up"></i>
+                          </button>
+                        ) : (
+                          <>
+                            <button className={styles.micBtn} title="Voice input">
+                              <i className="fa-solid fa-microphone"></i>
+                            </button>
+                            <div className={styles.waveformIcon} title="Voice feedback">
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <header className={styles.chatHeader}>
-              {!sidebarOpen && (
-                <button className={styles.openSidebarBtn} onClick={() => setSidebarOpen(true)} title="Open sidebar">
-                  <i className="fa-solid fa-bars"></i>
-                </button>
-              )}
-              <div className={styles.chatHeaderSpacer} />
-              <div className={styles.modelPicker} ref={modelPickerRef}>
-                <button
-                  className={styles.modelPickerBtn}
-                  onClick={() => setModelPickerOpen(!modelPickerOpen)}
-                >
-                  <i className="fa-regular fa-microchip"></i>
-                  <span>{models.find((m) => m.id === selectedModel)?.name || "GPT-4o Mini"}</span>
-                  <i className="fa-regular fa-chevron-down"></i>
-                </button>
-                {modelPickerOpen && (
-                  <div className={styles.modelPickerDropdown}>
-                    {models.map((m) => (
-                      <button
-                        key={m.id}
-                        className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
-                        onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
-                      >
-                        <span className={styles.modelOptionName}>
-                          {m.name}
-                          {m.best && <span className={styles.modelBestBadge}>Best</span>}
-                        </span>
-                        <span className={styles.modelOptionProvider}>{m.provider}</span>
-                        {m.id === selectedModel && <i className="fa-regular fa-check"></i>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button className={styles.editBtn}>
-                <i className="fa-regular fa-pen-to-square"></i>
-              </button>
-            </header>
-
-            <div className={styles.welcomeArea}>
-              <h1 className={styles.welcomeTitle}>
-                What's the vibe, <span className={styles.welcomeName}>{user?.display_name || "Researcher"}</span>?
-              </h1>
-
-              <div className={styles.welcomeInputBox}>
-                {files.length > 0 && (
-                  <div className={styles.filePreviews}>
-                    {files.map((f) => (
-                      <div key={f.id} className={styles.fileChip}>
-                        <i className={f.type.startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file"}></i>
-                        <span className={styles.fileChipName}>{f.name}</span>
-                        <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)}>
-                          <i className="fa-regular fa-xmark"></i>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.inputRow}>
-                  <button className={styles.inputActionBtn} onClick={() => fileInputRef.current?.click()} title="Attach file">
-                    <i className="fa-regular fa-plus"></i>
+              </>
+            ) : (
+              <>
+                <header className={styles.chatHeader}>
+                  {!sidebarOpen && (
+                    <button className={styles.openSidebarBtn} onClick={() => setSidebarOpen(true)} title="Open sidebar">
+                      <i className="fa-solid fa-bars"></i>
+                    </button>
+                  )}
+                  <div className={styles.chatHeaderSpacer} />
+                  <button className={styles.editBtn} onClick={newConversation} title="New chat">
+                    <i className="fa-regular fa-pen-to-square"></i>
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".txt,.pdf,.csv,.png,.jpg,.jpeg,.gif,.smiles,.sdf,.mol"
-                    className={styles.hiddenInput}
-                    onChange={handleFileSelect}
-                  />
-                  <textarea
-                    ref={inputRef}
-                    className={styles.inputField}
-                    placeholder="Ask MoleCraft AI"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    rows={1}
-                  />
-                  <div className={styles.inputActionsRight}>
-                    {loading ? (
-                      <button className={styles.stopBtn} onClick={stopGeneration} title="Stop">
-                        <i className="fa-solid fa-square"></i>
-                      </button>
-                    ) : showSend ? (
-                      <button className={styles.sendBtn} onClick={handleSubmit} title="Send">
-                        <i className="fa-solid fa-arrow-up"></i>
-                      </button>
-                    ) : (
-                      <button className={styles.micBtn} title="Voice input">
-                        <i className="fa-regular fa-microphone"></i>
-                      </button>
+                </header>
+
+                <div className={styles.welcomeArea}>
+                  <h1 className={styles.welcomeTitle}>
+                    What's the vibe, <span className={styles.welcomeName}>{user?.display_name || "Researcher"}</span>?
+                  </h1>
+
+                  <div className={styles.welcomeInputBox}>
+                    {files.length > 0 && (
+                      <div className={styles.filePreviews}>
+                        {files.map((f) => (
+                          <div key={f.id} className={styles.fileChip}>
+                            <i className={f.type.startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file"}></i>
+                            <span className={styles.fileChipName}>{f.name}</span>
+                            <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)}>
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
+                    <textarea
+                      ref={inputRef}
+                      className={styles.inputField}
+                      placeholder="Write a message..."
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      rows={1}
+                    />
+                    <div className={styles.inputToolbar}>
+                      <div className={styles.inputToolbarLeft}>
+                        <button className={styles.inputActionBtn} onClick={() => fileInputRef.current?.click()} title="Attach file">
+                          <i className="fa-regular fa-plus"></i>
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept=".txt,.pdf,.csv,.png,.jpg,.jpeg,.gif,.smiles,.sdf,.mol"
+                          className={styles.hiddenInput}
+                          onChange={handleFileSelect}
+                        />
+                      </div>
+                      <div className={styles.inputActionsRight}>
+                        <div className={styles.modelPicker} ref={modelPickerRef}>
+                          <button
+                            className={styles.modelPickerBtn}
+                            onClick={() => setModelPickerOpen(!modelPickerOpen)}
+                          >
+                            <span>{models.find((m) => m.id === selectedModel)?.name || "GPT-4o Mini"}</span>
+                            <i className="fa-solid fa-chevron-down"></i>
+                          </button>
+                          {modelPickerOpen && (
+                            <div className={styles.modelPickerDropdown}>
+                              {models.map((m) => (
+                                <button
+                                  key={m.id}
+                                  className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
+                                  onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
+                                >
+                                  <span className={styles.modelOptionName}>
+                                    {m.name}
+                                    {m.best && <span className={styles.modelBestBadge}>Best</span>}
+                                  </span>
+                                  {m.id === selectedModel && <i className="fa-solid fa-check"></i>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {loading ? (
+                          <button className={styles.stopBtn} onClick={stopGeneration} title="Stop">
+                            <i className="fa-solid fa-square"></i>
+                          </button>
+                        ) : showSend ? (
+                          <button className={styles.sendBtn} onClick={handleSubmit} title="Send">
+                            <i className="fa-solid fa-arrow-up"></i>
+                          </button>
+                        ) : (
+                          <>
+                            <button className={styles.micBtn} title="Voice input">
+                              <i className="fa-solid fa-microphone"></i>
+                            </button>
+                            <div className={styles.waveformIcon} title="Voice feedback">
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.suggestions}>
+                    {SUGGESTIONS_BY_COUNT.flat().slice(0, 6).map((s, i) => (
+                      <button
+                        key={i}
+                        className={styles.suggestionChip}
+                        onClick={() => {
+                          setInput(s);
+                          inputRef.current?.focus();
+                        }}
+                      >
+                        <i className={getSuggestionIcon(s)} style={{ fontSize: '11px', color: '#7C3AED' }}></i>
+                        <span>{s}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              <div className={styles.suggestions}>
-                {SUGGESTIONS_BY_COUNT.flat().slice(0, 6).map((s, i) => (
-                  <button
-                    key={i}
-                    className={styles.suggestionChip}
-                    onClick={() => {
-                      setInput(s);
-                      inputRef.current?.focus();
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <footer className={styles.chatFooter} />
-          </>
-        )}
-      </div>
+                <footer className={styles.chatFooter} />
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

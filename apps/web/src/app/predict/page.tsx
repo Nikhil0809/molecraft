@@ -2,14 +2,18 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { QueryBar } from "@/components/query/QueryBar";
+import styles from "./page.module.css";
 import { MoleculeStructure2D } from "@/components/molecule/MoleculeStructure2D";
 import { AffinityBadge } from "@/components/molecule/AffinityBadge";
 import { ConfidenceInterval } from "@/components/molecule/ConfidenceInterval";
 import { ValidationLabel } from "@/components/molecule/ValidationLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { RotatingLogo } from "@/components/loading/RotatingLogo";
-import styles from "./page.module.css";
+import { PurpleSpinner } from "@/components/loading/PurpleSpinner";
+
+const ACTION_LABELS = [
+  "Predict Affinity", "Estimate Binding", "Calculate Potency", "Score Docking",
+  "Validate Target", "Assay Simulation", "Dock Ligands", "Rank Hits",
+];
 
 interface PredictionResult {
   smiles: string;
@@ -38,6 +42,8 @@ function PredictPageContent() {
   const [selectedTarget, setSelectedTarget] = useState(MOCK_TARGETS[0]);
   const [error, setError] = useState<string | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
+  const [actionLabel] = useState(() => ACTION_LABELS[Math.floor(Math.random() * ACTION_LABELS.length)]);
+  const [smilesInput, setSmilesInput] = useState("");
 
   const FEATURE_DESCRIPTIONS: Record<string, string> = {
     "H-bond acceptors": "Oxygen/nitrogen atoms forming crucial polar attractions in the active pocket.",
@@ -65,7 +71,6 @@ function PredictPageContent() {
 
       const data = await response.json();
 
-      // Convert feature scores to percentages
       const f = data.featureScores || {
         binding_entropy: -6.42,
         electrostatic_contribution: -9.18,
@@ -80,10 +85,10 @@ function PredictPageContent() {
       const sum = entropy + electro + hydro + rot;
 
       const contributions = [
-        { label: "Hydrophobic contacts", value: hydro / sum, color: "var(--accent-success)" },
+        { label: "Hydrophobic contacts", value: hydro / sum, color: "#10b981" },
         { label: "Electrostatic", value: electro / sum, color: "#8B5CF6" },
-        { label: "H-bond acceptors", value: entropy / sum, color: "var(--accent-primary)" },
-        { label: "Van der Waals", value: rot / sum, color: "var(--text-secondary)" },
+        { label: "H-bond acceptors", value: entropy / sum, color: "#6366f1" },
+        { label: "Van der Waals", value: rot / sum, color: "#64748b" },
       ].sort((a, b) => b.value - a.value);
 
       setPrediction({
@@ -105,17 +110,16 @@ function PredictPageContent() {
     }
   }, []);
 
-  const handleSubmit = useCallback(
-    (query: string) => {
-      runPrediction(query, selectedTarget);
-    },
-    [selectedTarget, runPrediction]
-  );
+  const handleSubmit = useCallback(() => {
+    const trimmed = smilesInput.trim();
+    if (!trimmed || isLoading) return;
+    runPrediction(trimmed, selectedTarget);
+  }, [smilesInput, selectedTarget, isLoading, runPrediction]);
 
-  // Auto trigger prediction if parameter is in URL query
   useEffect(() => {
     const smilesParam = searchParams.get("smiles");
     if (smilesParam) {
+      setSmilesInput(smilesParam);
       window.history.replaceState({}, document.title, window.location.pathname);
       (async () => {
         await runPrediction(smilesParam, selectedTarget);
@@ -125,52 +129,93 @@ function PredictPageContent() {
 
   return (
     <div className={styles.page}>
-      <QueryBar
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        error={error}
-        defaultMode="predict"
-      />
 
-      {/* Target selector */}
-      <div className={styles.targetBar}>
-        <label className={styles.targetLabel}>Target Protein</label>
+      {/* Header / Search Bar */}
+      <header className={styles.header}>
+        <div className={styles.searchBar}>
+          <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M11.5 11.5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            className={styles.searchInput}
+            value={smilesInput}
+            onChange={(e) => setSmilesInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+            placeholder="Paste SMILES string (e.g. CCO, CC(=O)Oc1ccccc1C(=O)O)..."
+            disabled={isLoading}
+          />
+          <span className={styles.parserBadge}>SMILES</span>
+        </div>
+        <div className={styles.headerActions}>
+          <button className={styles.secondaryBtn}>Generate</button>
+          <button className={styles.secondaryBtn}>Predict</button>
+          <button className={styles.primaryBtn} onClick={handleSubmit} disabled={isLoading || !smilesInput.trim()}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 1.5L12 7L3 12.5V1.5Z" fill="currentColor" />
+            </svg>
+            {isLoading ? "Predicting..." : actionLabel}
+          </button>
+        </div>
+      </header>
+
+      {/* Target Selector */}
+      <section className={styles.sourcesSection}>
+        <div className={styles.sourcesInfo}>
+          <div className={styles.sourcesTitle}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "#60a5fa" }}>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="8" cy="8" r="2" fill="currentColor" />
+            </svg>
+            Target Protein
+          </div>
+          <p className={styles.sourcesSubtext}>Select the protein target for binding affinity prediction.</p>
+        </div>
         <select
           className={styles.targetSelect}
           value={selectedTarget}
           onChange={(e) => setSelectedTarget(e.target.value)}
         >
           {MOCK_TARGETS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
+            <option key={t} value={t}>{t}</option>
           ))}
         </select>
-      </div>
+      </section>
+
+      {error && (
+        <div className={styles.errorBanner}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M7 4V8M7 9.5V10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+          {error}
+        </div>
+      )}
 
       {!prediction && !isLoading ? (
-        <EmptyState
-          icon={
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="1.5"/>
-              <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="1.5"/>
-              <circle cx="24" cy="24" r="2" fill="currentColor"/>
-              <path d="M24 6V10M24 38V42M6 24H10M38 24H42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          }
-          title="Predict binding affinity"
-          description="Paste a SMILES string and select a target protein to predict binding affinity with confidence intervals."
-        />
+        <div className={styles.emptyArea}>
+          <EmptyState
+            icon={
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="24" cy="24" r="2" fill="currentColor"/>
+                <path d="M24 6V10M24 38V42M6 24H10M38 24H42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }
+            title="Predict binding affinity"
+            description="Paste a SMILES string and select a target protein to predict binding affinity with confidence intervals."
+          />
+        </div>
       ) : (
         <div className={styles.resultArea}>
           {isLoading ? (
-            <div className={styles.loadingState}>
-              <RotatingLogo size={48} baseDuration={12} clockwise />
-              <p className={styles.loadingText}>Running binding affinity prediction...</p>
-              <span className={styles.loadingSubtext}>
-                Analyzing molecular features against {selectedTarget.split(" (")[0]}
-              </span>
-            </div>
+            <PurpleSpinner
+              size={48}
+              text="Running binding affinity prediction..."
+              subtext={`Analyzing molecular features against ${selectedTarget.split(" (")[0]}`}
+            />
           ) : prediction ? (
             <div className={styles.predictionCard}>
               <div className={styles.predictionLeft}>
@@ -240,9 +285,8 @@ function PredictPageContent() {
 export default function PredictPage() {
   return (
     <Suspense fallback={
-      <div className={styles.loadingState}>
-        <RotatingLogo size={48} baseDuration={12} clockwise />
-        <p className={styles.loadingText}>Loading predictor...</p>
+      <div className={styles.page}>
+        <PurpleSpinner size={48} text="Loading predictor..." />
       </div>
     }>
       <PredictPageContent />

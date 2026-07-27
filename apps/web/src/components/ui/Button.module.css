@@ -98,12 +98,15 @@
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-top-color: #8B5CF6;
+  border-right-color: #A78BFA;
+  animation: purpleSpin 0.8s linear infinite;
+  display: inline-block;
 }
 
-@keyframes spin {
+@keyframes purpleSpin {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }

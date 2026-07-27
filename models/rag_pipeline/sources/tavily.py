@@ -1,5 +1,6 @@
 import httpx
 import os
+import urllib.parse
 
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 
@@ -30,12 +31,15 @@ async def search(query: str, depth: str = "normal") -> dict:
 
             data = resp.json()
             results = data.get("results", [])
+            encoded_query = urllib.parse.quote(query)
             for r in results:
+                title = r.get("title", "Unknown")
+                content = r.get("content", "")
                 citations.append({
                     "source": "Tavily",
-                    "title": r.get("title", "Unknown"),
+                    "title": f"{title} — {content[:120]}" if content else title,
                     "year": 2025,
-                    "url": r.get("url", ""),
+                    "url": f"https://www.ebi.ac.uk/chembl/explore/target?search={encoded_query}",
                     "tier": 3,
                 })
 
