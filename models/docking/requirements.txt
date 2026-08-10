@@ -2,3 +2,12 @@ fastapi==0.115.0
 uvicorn==0.30.6
 rdkit==2024.9.6
 pydantic==2.9.2
+torch==2.3.0
+torch-geometric==2.5.3
+torch-scatter==2.1.2 -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+torch-sparse==0.6.18 -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+torch-cluster==1.6.3 -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+torch-spline-conv==1.2.2 -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+biopython>=1.84
+prody>=2.3
+openbabel==3.2.1

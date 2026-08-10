@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import styles from "./page.module.css";
+import { TargetSelect } from "@/components/ui/TargetSelect";
 
 export default function AntibodyPage() {
   const [target, setTarget] = useState("EGFR");
@@ -27,11 +28,7 @@ export default function AntibodyPage() {
         <p className={styles.subtitle}>De-novo design of humanized monoclonal antibodies with CDR engineering</p>
       </header>
       <div className={styles.controls}>
-        <select className={styles.select} value={target} onChange={e => setTarget(e.target.value)}>
-          {["EGFR", "PD1", "HER2", "CD20", "TNFa", "VEGFA", "CTLA4", "IL6R"].map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+        <TargetSelect value={target} onChange={setTarget} valueMode="code" placeholder="Search target antigen (EGFR, PD1, HER2)..." />
         <button className={styles.button} onClick={design} disabled={loading}>
           {loading ? "Designing..." : "Design Antibodies"}
         </button>

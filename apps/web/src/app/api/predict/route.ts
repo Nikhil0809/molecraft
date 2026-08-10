@@ -3,7 +3,7 @@ import { verifySession } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import crypto from "crypto";
 
-const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:8001";
+const AFFINITY_API_URL = process.env.AFFINITY_API_URL || "http://localhost:8001";
 
 type AffinityResult = {
   affinity: number;
@@ -23,7 +23,7 @@ async function callAffinityModel(smiles: string, targetProtein: string): Promise
   const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const resp = await fetch(`${MODEL_API_URL}/predict`, {
+    const resp = await fetch(`${AFFINITY_API_URL}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ smiles, target_protein: targetProtein }),

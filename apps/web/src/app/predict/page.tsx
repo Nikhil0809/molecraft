@@ -9,6 +9,7 @@ import { ConfidenceInterval } from "@/components/molecule/ConfidenceInterval";
 import { ValidationLabel } from "@/components/molecule/ValidationLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PurpleSpinner } from "@/components/loading/PurpleSpinner";
+import { TargetSelect } from "@/components/ui/TargetSelect";
 
 const ACTION_LABELS = [
   "Predict Affinity", "Estimate Binding", "Calculate Potency", "Score Docking",
@@ -27,19 +28,11 @@ interface PredictionResult {
   contributions: { label: string; value: number; color: string }[];
 }
 
-const MOCK_TARGETS = [
-  "COX-2 (Cyclooxygenase-2)",
-  "EGFR (Epidermal Growth Factor Receptor)",
-  "BRAF (B-Raf proto-oncogene)",
-  "ACE2 (Angiotensin-converting enzyme 2)",
-  "HER2 (Human epidermal growth factor receptor 2)",
-];
-
 function PredictPageContent() {
   const searchParams = useSearchParams();
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState(MOCK_TARGETS[0]);
+  const [selectedTarget, setSelectedTarget] = useState("EGFR (Epidermal Growth Factor Receptor)");
   const [error, setError] = useState<string | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
   const [actionLabel] = useState(() => ACTION_LABELS[Math.floor(Math.random() * ACTION_LABELS.length)]);
@@ -149,8 +142,6 @@ function PredictPageContent() {
           <span className={styles.parserBadge}>SMILES</span>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.secondaryBtn}>Generate</button>
-          <button className={styles.secondaryBtn}>Predict</button>
           <button className={styles.primaryBtn} onClick={handleSubmit} disabled={isLoading || !smilesInput.trim()}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3 1.5L12 7L3 12.5V1.5Z" fill="currentColor" />
@@ -172,15 +163,11 @@ function PredictPageContent() {
           </div>
           <p className={styles.sourcesSubtext}>Select the protein target for binding affinity prediction.</p>
         </div>
-        <select
-          className={styles.targetSelect}
+        <TargetSelect
           value={selectedTarget}
-          onChange={(e) => setSelectedTarget(e.target.value)}
-        >
-          {MOCK_TARGETS.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+          onChange={setSelectedTarget}
+          placeholder="Search target protein (e.g. EGFR, KRAS, BRD4)..."
+        />
       </section>
 
       {error && (

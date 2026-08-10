@@ -1,5 +1,6 @@
-import httpx
 import urllib.parse
+
+import httpx
 
 WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php"
 
@@ -28,18 +29,22 @@ async def search(query: str, depth: str = "normal") -> dict:
 
             for r in results:
                 title = r.get("title", "Unknown")
-                page_id = r.get("pageid", "")
+                r.get("pageid", "")
                 snippet = r.get("snippet", "")
+                snippet_clean = (
+                    snippet[:120].replace('<span class="searchmatch">', "").replace("</span>", "")
+                )
+                full_title = f"{title} - {snippet_clean}..." if snippet else title
 
-                full_title = f"{title} - {snippet[:120].replace('<span class=\"searchmatch\">', '').replace('</span>', '')}..." if snippet else title
-
-                citations.append({
-                    "source": "Wikipedia",
-                    "title": full_title[:250],
-                    "year": 2025,
-                    "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}",
-                    "tier": 3,
-                })
+                citations.append(
+                    {
+                        "source": "Wikipedia",
+                        "title": full_title[:250],
+                        "year": 2025,
+                        "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}",
+                        "tier": 3,
+                    }
+                )
 
         return {
             "status": "done" if citations else "empty",

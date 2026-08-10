@@ -9,4 +9,3 @@ apps/web/node_modules
 .tox
 .venv
 venv
-apps/rag-admin

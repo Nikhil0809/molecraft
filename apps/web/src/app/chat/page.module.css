@@ -571,6 +571,83 @@
   max-width: 75%;
 }
 
+.msgBody {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.streamingBody::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  background: #a78bfa;
+  border-radius: 1px;
+  animation: caretBlink 0.9s ease-in-out infinite;
+}
+
+@keyframes caretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+.msgMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.msgActions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.message:hover .msgActions {
+  opacity: 1;
+}
+
+.msgError {
+  font-size: 13px;
+  color: #f87171;
+  margin: 0;
+}
+
+.editBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #a78bfa;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 8px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+}
+
+.editBanner i {
+  font-size: 10px;
+}
+
+.editCancel {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px;
+}
+
+.editCancel:hover {
+  color: #ef4444;
+}
+
 .msgContent {
   font-size: 14px;
   line-height: 1.6;

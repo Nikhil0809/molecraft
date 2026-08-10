@@ -9,6 +9,8 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,8 +32,9 @@ export default function LoginPage() {
     };
     window.addEventListener("resize", handleResize);
 
+    const dotCount = window.matchMedia("(max-width: 480px)").matches ? 12 : 30;
     const dots: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
-    const numDots = 30;
+    const numDots = dotCount;
 
     for (let i = 0; i < numDots; i++) {
       dots.push({
@@ -86,9 +89,35 @@ export default function LoginPage() {
     };
   }, []);
 
+  const validateField = (key: "email" | "password") => {
+    const message =
+      key === "email"
+        ? !email.trim()
+          ? "Email is required."
+          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+            ? "Enter a valid email address."
+            : ""
+        : !password
+          ? "Password is required."
+          : "";
+    setFieldErrors((prev) => ({ ...prev, [key]: message }));
+    return message;
+  };
+
+  const clearFieldError = (key: "email" | "password") => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const errors = { email: validateField("email"), password: validateField("password") };
+    setFieldErrors(errors);
+    if (errors.email || errors.password) {
       setError("Please fill in all fields.");
       return;
     }
@@ -149,9 +178,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
           {error && (
-            <div className={styles.errorBanner}>
+            <div role="alert" className={styles.errorBanner}>
               <svg className={styles.errorIcon} viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
               </svg>
@@ -161,7 +190,7 @@ export default function LoginPage() {
 
           <div className={styles.inputGroup}>
             <label htmlFor="email" className={styles.label}>Email Address</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${fieldErrors.email ? styles.inputWrapperError : email ? styles.inputWrapperValid : ""}`}>
               <div className={styles.icon}>
                 <svg className={styles.inputIcon} viewBox="0 0 20 20" fill="currentColor">
                   <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z" />
@@ -172,21 +201,26 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
+                onBlur={() => validateField("email")}
                 placeholder="name@company.com"
                 className={styles.input}
-                required
                 autoComplete="email"
+                aria-invalid={fieldErrors.email ? true : undefined}
+                aria-describedby={fieldErrors.email ? "emailError" : undefined}
               />
             </div>
+            {fieldErrors.email && (
+              <span id="emailError" className={styles.fieldError}>{fieldErrors.email}</span>
+            )}
           </div>
 
           <div className={styles.inputGroup}>
             <div className={styles.inputLabelRow}>
               <label htmlFor="password" className={styles.label}>Password</label>
-              <a href="#" className={styles.forgotPassword}>Forgot password?</a>
+              <a href="#" className={styles.forgotPassword} onClick={(e) => e.preventDefault()}>Forgot password?</a>
             </div>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${fieldErrors.password ? styles.inputWrapperError : password ? styles.inputWrapperValid : ""}`}>
               <div className={styles.icon}>
                 <svg className={styles.inputIcon} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
@@ -194,18 +228,31 @@ export default function LoginPage() {
               </div>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
+                onBlur={() => validateField("password")}
                 placeholder="••••••••"
-                className={styles.input}
-                required
+                className={`${styles.input} ${styles.inputHasToggle}`}
                 autoComplete="current-password"
+                aria-invalid={fieldErrors.password ? true : undefined}
+                aria-describedby={fieldErrors.password ? "passwordError" : undefined}
               />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+              </button>
             </div>
+            {fieldErrors.password && (
+              <span id="passwordError" className={styles.fieldError}>{fieldErrors.password}</span>
+            )}
           </div>
 
-          <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+          <button type="submit" className={styles.submitBtn} disabled={isSubmitting} aria-busy={isSubmitting}>
             {isSubmitting ? "Signing In..." : "Sign In to Platform"}
           </button>
         </form>

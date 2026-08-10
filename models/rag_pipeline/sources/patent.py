@@ -1,5 +1,6 @@
-import httpx
 import os
+
+import httpx
 
 PATENT_API_URL = os.environ.get("PATENT_API_URL", "http://localhost:8060")
 
@@ -25,13 +26,15 @@ async def search(query: str, depth: str = "normal") -> dict:
             data = resp.json()
             patents = data.get("patents", [])
             for p in patents[:max_results]:
-                citations.append({
-                    "source": "PatentDB",
-                    "title": f"{p['patent_number']}: {p['title']} ({p['assignee']})",
-                    "year": p.get("year", 2024),
-                    "url": f"https://patents.google.com/patent/{p['patent_number']}/",
-                    "tier": 2,
-                })
+                citations.append(
+                    {
+                        "source": "PatentDB",
+                        "title": f"{p['patent_number']}: {p['title']} ({p['assignee']})",
+                        "year": p.get("year", 2024),
+                        "url": f"https://patents.google.com/patent/{p['patent_number']}/",
+                        "tier": 2,
+                    }
+                )
 
         return {
             "status": "done" if citations else "empty",

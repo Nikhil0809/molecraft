@@ -1,0 +1,128 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+}
+
+.inputWrapper:focus-within {
+  border-color: #7C3AED;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.25);
+}
+
+.icon {
+  position: absolute;
+  left: 12px;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.inputWrapper input {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  background: transparent;
+  padding: 12px 16px 12px 40px;
+  color: #fff;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.inputWrapper input::placeholder {
+  color: #4b5563;
+}
+
+.inputWrapper input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0B0B12;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.option:hover,
+.highlight {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.optionMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.optionName {
+  font-size: 13px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionGene {
+  font-size: 11px;
+  color: #7c8aa5;
+}
+
+.optionCat {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a78bfa;
+  background: rgba(124, 58, 237, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.empty {
+  padding: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}

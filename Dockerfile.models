@@ -1,14 +1,142 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1
+
+# Multi-stage Dockerfile for MoleCraft Model Services
+# Supports GPU acceleration for ML workloads
+
+# Base stage with system dependencies
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install OpenBabel for docking
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openbabel \
+    && rm -rf /var/lib/apt/lists/*
+
+# Virtual environment for Python dependencies
+RUN python -m venv /opt/venv
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Development stage with all dependencies
+FROM base AS dev
+
+# Install Python dependencies (models/requirements.txt references sub-folders)
+COPY models/ ./models/
+RUN --mount=type=cache,target=/root/.cache/pip pip install --timeout=120 --retries=10 -r models/requirements.txt
+
+# Install dev dependencies
+RUN --mount=type=cache,target=/root/.cache/pip pip install --timeout=120 --retries=10 pytest pytest-cov pytest-asyncio httpx black ruff mypy
+
+# Copy source code
+COPY tests/ ./tests/
+COPY pyproject.toml ./
+
+WORKDIR /app/models
+
+EXPOSE 8000
+
+CMD ["python", "-m", "uvicorn", "gateway:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Production stage - optimized
+FROM base AS prod
+
+# Install only production Python dependencies (models/requirements.txt references sub-folders)
+COPY models/ ./models/
+RUN --mount=type=cache,target=/root/.cache/pip pip install --timeout=120 --retries=10 -r models/requirements.txt
+
+WORKDIR /app/models
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${SERVICE_PORT:-8000}/health || exit 1
+
+CMD ["python", "-m", "uvicorn", "gateway:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+
+# GPU-enabled stage for ML services
+FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04 AS gpu-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
     build-essential \
+    curl \
+    git \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1 \
+    openbabel \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3.11 -m venv /opt/venv && \
+    ln -s /usr/bin/python3.11 /usr/bin/python
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+FROM gpu-base AS gpu-dev
+
 COPY models/ ./models/
-RUN pip install --no-cache-dir -r models/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --timeout=120 --retries=10 -r models/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --timeout=120 --retries=10 --force-reinstall --no-deps \
+    torch-scatter==2.1.2 torch-sparse==0.6.18 torch-cluster==1.6.3 torch-spline-conv==1.2.2 \
+    -f https://data.pyg.org/whl/torch-2.3.0+cu121.html
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --timeout=120 --retries=10 pytest pytest-cov pytest-asyncio httpx black ruff mypy
+
+COPY tests/ ./tests/
+COPY pyproject.toml ./
+
+WORKDIR /app/models
 
 EXPOSE 8000
 
-CMD ["python", "-m", "uvicorn", "models.gateway:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "gateway:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+FROM gpu-base AS gpu-prod
+
+COPY models/ ./models/
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --timeout=120 --retries=10 -r models/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --timeout=120 --retries=10 --force-reinstall --no-deps \
+    torch-scatter==2.1.2 torch-sparse==0.6.18 torch-cluster==1.6.3 torch-spline-conv==1.2.2 \
+    -f https://data.pyg.org/whl/torch-2.3.0+cu121.html
+
+WORKDIR /app/models
+
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${SERVICE_PORT:-8000}/health || exit 1
+
+CMD ["python", "-m", "uvicorn", "gateway:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

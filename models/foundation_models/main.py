@@ -1,17 +1,11 @@
-import asyncio
 import json
-import math
 import time
-import uuid
-from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors, rdMolDescriptors
-from rdkit.Chem.rdchem import Mol
+from rdkit.Chem import AllChem, Descriptors
 
 app = FastAPI(title="OmniMole Foundation Models", version="1.0.0")
 
@@ -24,12 +18,14 @@ GNN_AVAILABLE = False
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     pass
 
 try:
-    from esm import FastaBatchedDataset, pretrained
+    from esm import pretrained
+
     ESM_AVAILABLE = True
 except ImportError:
     pass
@@ -43,7 +39,9 @@ class GNNPredictRequest(BaseModel):
 
 class ESMEmbedRequest(BaseModel):
     sequence: str = Field(..., description="Protein amino acid sequence")
-    model_size: str = Field(default="esm2_t12_35M", pattern="^(esm2_t6_8M|esm2_t12_35M|esm2_t33_650M|esm2_t36_3B)$")
+    model_size: str = Field(
+        default="esm2_t12_35M", pattern="^(esm2_t6_8M|esm2_t12_35M|esm2_t33_650M|esm2_t36_3B)$"
+    )
 
 
 class AffinityPrediction(BaseModel):
@@ -100,7 +98,7 @@ class MolT5Response(BaseModel):
     sequences: list[dict]
 
 
-def morgan_fingerprint(smiles: str) -> Optional[np.ndarray]:
+def morgan_fingerprint(smiles: str) -> np.ndarray | None:
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
@@ -133,7 +131,9 @@ def compute_gnn_affinity(smiles: str, target: str) -> tuple[float, float, float,
     noise_std = 0.15 * affinity_nm
     ci_low = round(max(0.1, affinity_nm - 1.96 * noise_std), 2)
     ci_high = round(affinity_nm + 1.96 * noise_std, 2)
-    confidence = round(min(0.95, 0.5 + qed * 0.3 + (1.0 - min(abs(logp - 2.5) / 5.0, 1.0)) * 0.2), 3)
+    confidence = round(
+        min(0.95, 0.5 + qed * 0.3 + (1.0 - min(abs(logp - 2.5) / 5.0, 1.0)) * 0.2), 3
+    )
 
     return affinity_nm, ci_low, ci_high, confidence
 
@@ -144,19 +144,29 @@ def compute_graph_attribution(smiles: str) -> list[dict]:
         return []
     attributions = []
     for atom in mol.GetAtoms():
-        idx = atom.GetAtomIdx()
-        env = Chem.MolFromSmiles(Chem.MolFragmentToSmiles(
-            mol, atomsToUse=list(range(max(0, idx - 2), min(mol.GetNumAtoms(), idx + 3))),
-            kekuleSmiles=True
-        ))
+        idx = atom.GetIdx()
+        env = Chem.MolFromSmiles(
+            Chem.MolFragmentToSmiles(
+                mol,
+                atomsToUse=list(range(max(0, idx - 2), min(mol.GetNumAtoms(), idx + 3))),
+                kekuleSmiles=True,
+            )
+        )
         if env:
-            importance = round(0.1 + 0.9 * (atom.GetDegree() / 4.0) * (1.0 / (1.0 + abs(atom.GetAtomicNum() - 6))), 4)
-            attributions.append({
-                "atom_indices": [idx],
-                "smiles": Chem.MolToSmiles(env)[:60],
-                "importance": importance,
-                "contribution_type": ["hydrophobic", "polar", "charged", "aromatic"][min(atom.GetAtomicNum() % 4, 3)]
-            })
+            importance = round(
+                0.1 + 0.9 * (atom.GetDegree() / 4.0) * (1.0 / (1.0 + abs(atom.GetAtomicNum() - 6))),
+                4,
+            )
+            attributions.append(
+                {
+                    "atom_indices": [idx],
+                    "smiles": Chem.MolToSmiles(env)[:60],
+                    "importance": importance,
+                    "contribution_type": ["hydrophobic", "polar", "charged", "aromatic"][
+                        min(atom.GetAtomicNum() % 4, 3)
+                    ],
+                }
+            )
     attributions.sort(key=lambda x: -x["importance"])
     return attributions[:20]
 
@@ -173,16 +183,18 @@ def gnn_predict(req: GNNPredictRequest):
     attributions = compute_graph_attribution(req.smiles)
 
     return GNNPredictionResponse(
-        predictions=[AffinityPrediction(
-            smiles=req.smiles,
-            target_protein=req.target_protein,
-            affinity_nm=affinity_nm,
-            ci_low=ci_low,
-            ci_high=ci_high,
-            confidence=confidence,
-            method="graph-neural-network",
-            model_used=f"{req.model_type}-v1"
-        )],
+        predictions=[
+            AffinityPrediction(
+                smiles=req.smiles,
+                target_protein=req.target_protein,
+                affinity_nm=affinity_nm,
+                ci_low=ci_low,
+                ci_high=ci_high,
+                confidence=confidence,
+                method="graph-neural-network",
+                model_used=f"{req.model_type}-v1",
+            )
+        ],
         attributions=[SubstructureAttribution(**a) for a in attributions],
         inference_ms=round((time.time() - start) * 1000, 1),
         model_info={
@@ -190,14 +202,12 @@ def gnn_predict(req: GNNPredictRequest):
             "morgan_bits": MORGAN_BITS,
             "gnn_available": GNN_AVAILABLE,
             "torch_available": TORCH_AVAILABLE,
-        }
+        },
     )
 
 
 @app.post("/esm/embed", response_model=ESMEmbedResponse)
 def esm_embed(req: ESMEmbedRequest):
-    start = time.time()
-
     if ESM_AVAILABLE and req.sequence:
         try:
             model, alphabet = pretrained.load_model_and_alphabet(req.model_size)
@@ -206,7 +216,9 @@ def esm_embed(req: ESMEmbedRequest):
             batch_labels, batch_strs, batch_tokens = batch_converter(data)
             with torch.no_grad():
                 results = model(batch_tokens, repr_layers=[model.num_layers])
-            token_representations = results["representations"][model.num_layers][0, 1:-1].mean(dim=0).numpy()
+            token_representations = (
+                results["representations"][model.num_layers][0, 1:-1].mean(dim=0).numpy()
+            )
             embedding = token_representations.tolist()
             dim = len(embedding)
         except Exception:
@@ -222,7 +234,7 @@ def esm_embed(req: ESMEmbedRequest):
         embedding=embedding,
         embedding_dim=dim,
         model=req.model_size,
-        sequence_length=len(req.sequence) if req.sequence else 0
+        sequence_length=len(req.sequence) if req.sequence else 0,
     )
 
 
@@ -237,13 +249,13 @@ def fold_protein(req: FoldingRequest):
         "ATOM      3  C   ALA A   1       2.000   3.000   4.000  1.00  0.00           C",
         "ATOM      4  O   ALA A   1       2.500   3.500   4.500  1.00  0.00           O",
         "TER",
-        "END"
+        "END",
     ]
     return FoldingResponse(
         pdb_content="\n".join(pdb_lines),
         confidence=0.85 if ESM_AVAILABLE else 0.40,
         method=f"{req.model}-placeholder",
-        sequence=req.sequence
+        sequence=req.sequence,
     )
 
 
@@ -251,7 +263,11 @@ def fold_protein(req: FoldingRequest):
 def molt5_generate(req: MolT5Request):
     if req.task == "caption" and req.input_text:
         sequences = [
-            {"text": f"Predicted molecule: {req.input_text}", "score": round(0.95 - i * 0.05, 3), "type": "caption"}
+            {
+                "text": f"Predicted molecule: {req.input_text}",
+                "score": round(0.95 - i * 0.05, 3),
+                "type": "caption",
+            }
             for i in range(min(req.num_return_sequences, 5))
         ]
     elif req.task == "generation" and req.input_text:

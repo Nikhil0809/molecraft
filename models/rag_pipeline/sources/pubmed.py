@@ -1,5 +1,6 @@
-import httpx
 import xml.etree.ElementTree as ET
+
+import httpx
 
 ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 ESUMMARY = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
@@ -80,13 +81,15 @@ async def search(query: str, depth: str = "normal", api_key: str = "") -> dict:
                             title = "PubMed article"
 
                 if title:
-                    citations.append({
-                        "source": source,
-                        "title": title[:200],
-                        "year": year,
-                        "url": f"https://pubmed.ncbi.nlm.nih.gov/{uid}/",
-                        "tier": 1,
-                    })
+                    citations.append(
+                        {
+                            "source": source,
+                            "title": title[:200],
+                            "year": year,
+                            "url": f"https://pubmed.ncbi.nlm.nih.gov/{uid}/",
+                            "tier": 1,
+                        }
+                    )
 
         return {
             "status": "done" if citations else "empty",

@@ -111,8 +111,6 @@ export default function GeneratePage() {
             <span className={styles.parserBadge}>TARGET</span>
           </div>
           <div className={styles.headerActions}>
-            <button className={styles.secondaryBtn}>Generate</button>
-            <button className={styles.secondaryBtn}>Predict</button>
             <button className={styles.primaryBtn} onClick={handleSubmit} disabled={isLoading || !query.trim()}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 1.5L12 7L3 12.5V1.5Z" fill="currentColor" />

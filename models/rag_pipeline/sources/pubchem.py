@@ -1,7 +1,6 @@
-import httpx
-import asyncio
 import urllib.parse
-from typing import Optional
+
+import httpx
 
 PUGREST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 
@@ -73,13 +72,15 @@ async def search(query: str, depth: str = "normal") -> dict:
                 if formula:
                     desc += f" ({formula}, MW: {mw})"
 
-                citations.append({
-                    "source": "PubChem",
-                    "title": desc,
-                    "year": 2024,
-                    "url": f"https://pubchem.ncbi.nlm.nih.gov/compound/{cid}",
-                    "tier": 1,
-                })
+                citations.append(
+                    {
+                        "source": "PubChem",
+                        "title": desc,
+                        "year": 2024,
+                        "url": f"https://pubchem.ncbi.nlm.nih.gov/compound/{cid}",
+                        "tier": 1,
+                    }
+                )
 
         return {
             "status": "done" if citations else "empty",

@@ -1,10 +1,12 @@
+-f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+
 -r admet_ml/requirements.txt
 -r affinity_predictor/requirements.txt
 -r antibody_design/requirements.txt
 -r clinical_trial/requirements.txt
 -r docking/requirements.txt
 -r foundation_models/requirements.txt
--r generative/requirements.txt
+-r generative_diffusion/requirements.txt
 -r ingestion_service/requirements.txt
 -r lab_automation/requirements.txt
 -r molecule_qa/requirements.txt

@@ -26,6 +26,9 @@
   --accent-primary: #6366f1;
   --accent-primary-hover: #818cf8;
   --accent-primary-muted: rgba(99, 102, 241, 0.15);
+  --accent-auth: #7C3AED;
+  --accent-auth-hover: #8B5CF6;
+  --accent-auth-muted: rgba(124, 58, 237, 0.15);
   --accent-success: #10b981;
   --accent-success-muted: rgba(16, 185, 129, 0.15);
   --accent-warning: #f59e0b;

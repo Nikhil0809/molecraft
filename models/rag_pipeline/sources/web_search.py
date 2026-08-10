@@ -1,6 +1,7 @@
-import httpx
-import re
 import html as html_mod
+import re
+
+import httpx
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -33,13 +34,15 @@ async def search(query: str, depth: str = "normal") -> dict:
                 title = html_mod.unescape(title)
                 snippet = html_mod.unescape(snippet[:200])
 
-                citations.append({
-                    "source": "Web",
-                    "title": f"{title} — {snippet}" if snippet else title,
-                    "year": 2025,
-                    "url": url,
-                    "tier": 3,
-                })
+                citations.append(
+                    {
+                        "source": "Web",
+                        "title": f"{title} — {snippet}" if snippet else title,
+                        "year": 2025,
+                        "url": url,
+                        "tier": 3,
+                    }
+                )
 
             if not citations:
                 fallback_resp = await client.get(
@@ -59,13 +62,15 @@ async def search(query: str, depth: str = "normal") -> dict:
                         snippet = re.sub(r"<.*?>", "", snippet_html).strip()
                         title = html_mod.unescape(title)
                         snippet = html_mod.unescape(snippet[:200])
-                        citations.append({
-                            "source": "Web",
-                            "title": f"{title} — {snippet}" if snippet else title,
-                            "year": 2025,
-                            "url": url,
-                            "tier": 3,
-                        })
+                        citations.append(
+                            {
+                                "source": "Web",
+                                "title": f"{title} — {snippet}" if snippet else title,
+                                "year": 2025,
+                                "url": url,
+                                "tier": 3,
+                            }
+                        )
 
         return {
             "status": "done" if citations else "empty",

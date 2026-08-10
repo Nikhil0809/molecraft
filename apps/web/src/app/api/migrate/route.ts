@@ -106,6 +106,43 @@ export async function GET() {
     await sql`CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_id ON chat_messages(conversation_id)`;
 
+    // Docking runs table
+    await sql`
+      CREATE TABLE IF NOT EXISTS docking_runs (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+        molecule_id UUID REFERENCES molecules(id) ON DELETE SET NULL,
+        smiles TEXT NOT NULL,
+        target_protein VARCHAR(255) NOT NULL,
+        engine VARCHAR(20) DEFAULT 'vina',
+        best_affinity_kcal_mol DOUBLE PRECISION,
+        num_poses INTEGER DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'pending',
+        error_message TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    // Docking poses table
+    await sql`
+      CREATE TABLE IF NOT EXISTS docking_poses (
+        id UUID PRIMARY KEY,
+        run_id UUID NOT NULL REFERENCES docking_runs(id) ON DELETE CASCADE,
+        pose_id INTEGER NOT NULL,
+        affinity_kcal_mol DOUBLE PRECISION NOT NULL,
+        rmsd_lb DOUBLE PRECISION,
+        rmsd_ub DOUBLE PRECISION,
+        confidence DOUBLE PRECISION,
+        coordinates JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_docking_runs_user_id ON docking_runs(user_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_docking_poses_run_id ON docking_poses(run_id)`;
+
     return NextResponse.json({ success: true, message: "Migration completed successfully" });
   } catch (error) {
     console.error("Migration error:", error);

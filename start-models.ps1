@@ -3,6 +3,16 @@
 
 $PSStyle.Progress.UseOSShell = $false
 
+# Load Groq config (used by RAG pipeline / molecule-qa for LLM reasoning)
+if (Test-Path "$PSScriptRoot\.env") {
+    $envLines = Get-Content "$PSScriptRoot\.env"
+    foreach ($line in $envLines) {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
+            [Environment]::SetEnvironmentVariable($matches[1], $matches[2].Trim('"'), "Process")
+        }
+    }
+}
+
 Write-Host "Starting MoleCraft model services..." -ForegroundColor Cyan
 
 $services = @(

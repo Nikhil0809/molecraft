@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import styles from "./page.module.css";
+import { TargetSelect } from "@/components/ui/TargetSelect";
 
 export default function PeptidePage() {
   const [target, setTarget] = useState("GLP1R");
@@ -27,7 +28,7 @@ export default function PeptidePage() {
         <p className={styles.subtitle}>Design linear peptides, cyclic peptides, and stapled macrocycles</p>
       </header>
       <div className={styles.controls}>
-        <input className={styles.input} value={target} onChange={e => setTarget(e.target.value)} placeholder="Target" />
+        <TargetSelect value={target} onChange={setTarget} valueMode="code" placeholder="Search target protein (GLP1R, SSTR2, CypA)..." />
         <label className={styles.checkbox}>
           <input type="checkbox" checked={cyclic} onChange={e => setCyclic(e.target.checked)} />
           Cyclic

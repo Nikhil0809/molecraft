@@ -33,6 +33,9 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  onboardingInProgress: boolean;
+  beginOnboarding: () => void;
+  finishOnboarding: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,6 +43,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingInProgress, setOnboardingInProgress] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -72,11 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isPublicPage = pathname === "/login" || pathname === "/signup" || pathname === "/";
       if (!user && !isPublicPage) {
         router.push("/login");
-      } else if (user && isPublicPage && pathname !== "/") {
+      } else if (user && isPublicPage && pathname !== "/" && !onboardingInProgress) {
         router.push("/generate");
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname, router, onboardingInProgress]);
+
+  const beginOnboarding = () => setOnboardingInProgress(true);
+  const finishOnboarding = () => setOnboardingInProgress(false);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -125,7 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json();
       setUser(data.user);
-      router.push("/generate");
+      if (!onboardingInProgress) {
+        router.push("/generate");
+      }
     } finally {
       setLoading(false);
     }
@@ -153,6 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         refreshUser: fetchCurrentUser,
+        onboardingInProgress,
+        beginOnboarding,
+        finishOnboarding,
       }}
     >
       {children}

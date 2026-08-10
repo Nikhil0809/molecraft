@@ -1,11 +1,8 @@
-import math
 import random
 import time
 import uuid
-from typing import Optional
 
-import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="OmniMole Peptide & Macrocycle Design", version="1.0.0")
@@ -17,13 +14,25 @@ POLAR_AA = list("NQST")
 STRUCTURAL_AA = list("PG")
 
 AMPHIPATHIC_PATTERNS: list[str] = [
-    "VXLXAXLX", "KLXLKLXLK", "EWLXKLXKL", "AXLXALAXA", "GLFXGLFXGL",
+    "VXLXAXLX",
+    "KLXLKLXLK",
+    "EWLXKLXKL",
+    "AXLXALAXA",
+    "GLFXGLFXGL",
 ]
 
 KNOWN_PEPTIDE_THERAPEUTICS: dict[str, dict] = {
-    "GLP1": {"seq": "HGEGTFTSDVSSYLEEQAAKEFIAWLVKGRG", "target": "GLP1R", "class": "incretin_mimetic"},
+    "GLP1": {
+        "seq": "HGEGTFTSDVSSYLEEQAAKEFIAWLVKGRG",
+        "target": "GLP1R",
+        "class": "incretin_mimetic",
+    },
     "Somatostatin": {"seq": "AGCKNFFWKTFTSC", "target": "SSTR2", "class": "hormone"},
-    "Cyclosporine": {"seq": "MeBmt-Abu-Sar-MeLeu-Val-MeLeu-Ala-D-Ala-MeLeu-MeLeu-MeVal", "target": "CypA", "class": "immunosuppressant"},
+    "Cyclosporine": {
+        "seq": "MeBmt-Abu-Sar-MeLeu-Val-MeLeu-Ala-D-Ala-MeLeu-MeLeu-MeVal",
+        "target": "CypA",
+        "class": "immunosuppressant",
+    },
     "Bradykinin": {"seq": "RPPGFSPF", "target": "B2R", "class": "vasoactive"},
 }
 
@@ -67,7 +76,9 @@ class PeptideDesignResponse(BaseModel):
 class MacrocycleDesignRequest(BaseModel):
     target: str = Field(..., description="Target protein")
     sequence_template: str = Field(default="", description="Optional template sequence")
-    cyclization_type: str = Field(default="stapled", pattern="^(stapled|disulfide|lactam|triazole|thioether)$")
+    cyclization_type: str = Field(
+        default="stapled", pattern="^(stapled|disulfide|lactam|triazole|thioether)$"
+    )
     count: int = Field(default=5, ge=1, le=20)
 
 
@@ -92,9 +103,31 @@ class MacrocycleDesignResponse(BaseModel):
 
 
 def compute_peptide_properties(seq: str) -> dict:
-    mw = sum({"A": 71.09, "R": 156.19, "N": 114.11, "D": 115.09, "C": 103.15, "E": 129.12, "Q": 128.13,
-              "G": 57.05, "H": 137.14, "I": 113.16, "L": 113.16, "K": 128.17, "M": 131.19, "F": 147.18,
-              "P": 97.12, "S": 87.08, "T": 101.11, "W": 186.21, "Y": 163.18, "V": 99.14}.get(aa, 110.0) for aa in seq)
+    mw = sum(
+        {
+            "A": 71.09,
+            "R": 156.19,
+            "N": 114.11,
+            "D": 115.09,
+            "C": 103.15,
+            "E": 129.12,
+            "Q": 128.13,
+            "G": 57.05,
+            "H": 137.14,
+            "I": 113.16,
+            "L": 113.16,
+            "K": 128.17,
+            "M": 131.19,
+            "F": 147.18,
+            "P": 97.12,
+            "S": 87.08,
+            "T": 101.11,
+            "W": 186.21,
+            "Y": 163.18,
+            "V": 99.14,
+        }.get(aa, 110.0)
+        for aa in seq
+    )
     mw += 18.02
 
     charge = sum(1 for aa in seq if aa in "KR") - sum(1 for aa in seq if aa in "DE")
@@ -109,13 +142,34 @@ def compute_peptide_properties(seq: str) -> dict:
 
     n_positive = sum(1 for aa in seq if aa in "RK")
     n_negative = sum(1 for aa in seq if aa in "DE")
-    amphipathic = round(min(1.0, (n_positive + n_negative) / max(len(seq), 1) * hydrophobicity * 2), 3)
+    amphipathic = round(
+        min(1.0, (n_positive + n_negative) / max(len(seq), 1) * hydrophobicity * 2), 3
+    )
 
     pi = 7.0 + 0.5 * charge
 
-    membrane = round(float(max(0.01, min(0.95, 0.1 + hydrophobicity * 0.5 - solubility * 0.2 + (1.0 if len(seq) < 12 else 0.0) * 0.2))), 3)
+    membrane = round(
+        float(
+            max(
+                0.01,
+                min(
+                    0.95,
+                    0.1
+                    + hydrophobicity * 0.5
+                    - solubility * 0.2
+                    + (1.0 if len(seq) < 12 else 0.0) * 0.2,
+                ),
+            )
+        ),
+        3,
+    )
 
-    stability = round(float(max(0.1, min(1.0, 0.3 + helical * 0.3 + 0.2 * (len(seq) > 10) + 0.1 * (charge != 0)))), 3)
+    stability = round(
+        float(
+            max(0.1, min(1.0, 0.3 + helical * 0.3 + 0.2 * (len(seq) > 10) + 0.1 * (charge != 0)))
+        ),
+        3,
+    )
 
     log_aff = 1.0 - 0.05 * len(seq) + hydrophobicity * 0.5 - 0.1 * abs(charge)
     aff = round(10 ** max(-1, min(log_aff, 3)), 2)
@@ -136,7 +190,7 @@ def compute_peptide_properties(seq: str) -> dict:
 
 def random_peptide(length: int, hydrophobic_ratio: float, helical: float) -> str:
     seq = []
-    for i in range(length):
+    for _ in range(length):
         r = random.random()
         if r < hydrophobic_ratio:
             seq.append(random.choice(HYDROPHOBIC_AA))
@@ -172,22 +226,24 @@ def design_peptides(req: PeptideDesignRequest):
         if req.cyclic:
             membrane_perm = round(min(0.95, membrane_perm * 1.5), 3)
 
-        peptides.append(PeptideHit(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            length=len(seq),
-            mw_da=props["mw"],
-            charge=props["charge"],
-            isoelectric_point=props["pi"],
-            hydrophobicity=props["hydrophobicity"],
-            helical_content=props["helical"],
-            solubility=props["solubility"],
-            membrane_permeability=membrane_perm,
-            protease_stability=props["stability"],
-            target_affinity_nm=target_affinity,
-            cyclic=req.cyclic,
-            amphipathic_score=props["amphipathic"],
-        ))
+        peptides.append(
+            PeptideHit(
+                id=str(uuid.uuid4()),
+                sequence=seq,
+                length=len(seq),
+                mw_da=props["mw"],
+                charge=props["charge"],
+                isoelectric_point=props["pi"],
+                hydrophobicity=props["hydrophobicity"],
+                helical_content=props["helical"],
+                solubility=props["solubility"],
+                membrane_permeability=membrane_perm,
+                protease_stability=props["stability"],
+                target_affinity_nm=target_affinity,
+                cyclic=req.cyclic,
+                amphipathic_score=props["amphipathic"],
+            )
+        )
 
     peptides.sort(key=lambda p: p.target_affinity_nm)
     best = peptides[0].target_affinity_nm if peptides else 999.0
@@ -211,7 +267,7 @@ def design_macrocycles(req: MacrocycleDesignRequest):
         base_seq = "".join(random.choice(MACROCYCLE_AA) for _ in range(length))
 
     macrocycles = []
-    for i in range(req.count):
+    for _ in range(req.count):
         if req.cyclization_type == "stapled" and len(base_seq) > 6:
             staple_pos = f"i, i+{random.randint(3, 7)}"
             cyclized = base_seq[:4] + "X" + base_seq[4:-2] + "X" + base_seq[-2:]
@@ -226,24 +282,28 @@ def design_macrocycles(req: MacrocycleDesignRequest):
             mw = sum(110.0 for _ in cyclized) + 18.0
 
         logp = round(float(-1.5 + 0.3 * cyclized.count("VILFMWY")), 2)
-        stability = round(float(random.beta(4, 2)), 3)
+        stability = round(float(random.betavariate(4, 2)), 3)
         aff = round(float(10 ** random.uniform(-0.5, 1.5)), 2)
         membrane = round(float(min(0.9, 0.2 + 0.08 * cyclized.count("VILFMWY"))), 3)
-        oral = round(float(min(1.0, membrane * 0.5 + (1.0 / (1.0 + mw / 500)) * 0.3 + stability * 0.2)), 3)
+        oral = round(
+            float(min(1.0, membrane * 0.5 + (1.0 / (1.0 + mw / 500)) * 0.3 + stability * 0.2)), 3
+        )
 
-        macrocycles.append(MacrocycleHit(
-            id=str(uuid.uuid4()),
-            sequence=base_seq,
-            cyclized_sequence=cyclized,
-            cyclization_type=req.cyclization_type,
-            staple_position=staple_pos,
-            mw_da=round(mw, 1),
-            logp=logp,
-            conformational_stability=stability,
-            target_affinity_nm=aff,
-            membrane_permeability=membrane,
-            oral_bioavailability_score=oral,
-        ))
+        macrocycles.append(
+            MacrocycleHit(
+                id=str(uuid.uuid4()),
+                sequence=base_seq,
+                cyclized_sequence=cyclized,
+                cyclization_type=req.cyclization_type,
+                staple_position=staple_pos,
+                mw_da=round(mw, 1),
+                logp=logp,
+                conformational_stability=stability,
+                target_affinity_nm=aff,
+                membrane_permeability=membrane,
+                oral_bioavailability_score=oral,
+            )
+        )
 
     macrocycles.sort(key=lambda m: m.target_affinity_nm)
     return MacrocycleDesignResponse(

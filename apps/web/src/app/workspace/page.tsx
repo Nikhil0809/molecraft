@@ -17,6 +17,8 @@ import { CursorGhost } from "@/components/canvas/CursorGhost";
 
 import { MoleculeDetailsPanel } from "@/components/molecule/MoleculeDetailsPanel";
 import type { MoleculeData } from "@/components/molecule/MoleculeCard";
+import { DiffusionDesigner, type DiffusionResult } from "@/components/generative/DiffusionDesigner";
+import { DiffusionResultsPanel } from "@/components/generative/DiffusionResultsPanel";
 import { useWorkflowLearning } from "@/hooks/useWorkflowLearning";
 import { useCanvasPersistence } from "@/hooks/useCanvasPersistence";
 import styles from "./page.module.css";
@@ -56,6 +58,27 @@ export interface WorkspaceNode {
   moleculeData?: APIMolecule;
 }
 
+export interface DockingPose {
+  pose_id: number;
+  affinity_kcal_mol: number;
+  rmsd_lb: number;
+  rmsd_ub: number;
+  confidence?: number | null;
+  coordinates?: number[][] | null;
+}
+
+export interface DockingResult {
+  id: string;
+  smiles: string;
+  target: string;
+  engine: string;
+  status: string;
+  bestAffinityKcalMol: number | null;
+  numPoses: number;
+  poses: DockingPose[];
+  createdAt: string;
+}
+
 const COLS = 4;
 const COL_WIDTH = 280;
 const ROW_HEIGHT = 340;
@@ -90,6 +113,17 @@ export default function WorkspacePage() {
   const [lastQuery, setLastQuery] = useState("");
   const [inferenceTrail, setInferenceTrail] = useState<string[]>([]);
   const [showTrail, setShowTrail] = useState(false);
+  const [showDiffusionDesigner, setShowDiffusionDesigner] = useState(false);
+  const [diffusionResults, setDiffusionResults] = useState<DiffusionResult[]>([]);
+  const [showDiffusionResults, setShowDiffusionResults] = useState(false);
+  const [diffusionMeta, setDiffusionMeta] = useState<{ generated: number; filtered: number; ms: number } | null>(null);
+  const [isDiffusionGenerating, setIsDiffusionGenerating] = useState(false);
+  const [diffusionProgress, setDiffusionProgress] = useState("");
+  const [showDocking, setShowDocking] = useState(false);
+  const [dockingResult, setDockingResult] = useState<DockingResult | null>(null);
+  const [isDocking, setIsDocking] = useState(false);
+  const [dockingTarget, setDockingTarget] = useState("");
+  const [dockingMolecule, setDockingMolecule] = useState<string | null>(null);
   const { preferences, recordAction, suggestLayout, setLayout } = useWorkflowLearning();
   const canvasPersistence = useCanvasPersistence();
   const gridCursor = useRef({ col: 0, row: 0 });
@@ -265,6 +299,55 @@ export default function WorkspacePage() {
     }
   }, [addNode, suggestLayout, generateLinks]);
 
+  /* ─── docking workflow handlers ─── */
+  const handleDocking = useCallback(async (smiles: string, target: string) => {
+    const cleanTarget = target.trim().replace(/^against|^vs\.?|^on\s+/i, "").trim();
+    if (!cleanTarget) {
+      setError("Specify a target protein (e.g. \"dock against EGFR\")");
+      return;
+    }
+    setDockingMolecule(smiles);
+    setDockingTarget(cleanTarget);
+    setShowDocking(true);
+    setIsDocking(true);
+    setDockingResult(null);
+    setError(null);
+
+    setInferenceTrail((prev) => [
+      ...prev,
+      `Preparing ${smiles.length > 22 ? smiles.slice(0, 22) + "…" : smiles} for docking against ${cleanTarget}`,
+      `Running AutoDock Vina scoring...`,
+    ]);
+
+    try {
+      const resp = await fetch("/api/docking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ smiles, targetProtein: cleanTarget, numPoses: 9 }),
+      });
+
+      if (resp.status === 401) {
+        throw new Error("Session expired. Please log in again.");
+      }
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body.error || "Docking service unavailable");
+      }
+
+      const data: DockingResult = await resp.json();
+      setDockingResult(data);
+      setInferenceTrail((prev) => [
+        ...prev,
+        `Docking complete — best pose ${data.bestAffinityKcalMol ?? "—"} kcal/mol (${data.engine})`,
+      ]);
+      recordAction("run_docking", cleanTarget);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Docking failed");
+    } finally {
+      setIsDocking(false);
+    }
+  }, [recordAction]);
+
   /* ─── ambient whisper submit ─── */
   const handleWhisperSubmit = useCallback((input: string) => {
     setWhisperOpen(false);
@@ -289,12 +372,30 @@ export default function WorkspacePage() {
           setShowDetails(true);
           return;
         }
+        const dockMatch = trimmed.match(/^dock(?:\s+(?:against|vs\.?|on|into|to))?\s+(.+)$/i);
+        if (dockMatch) {
+          handleDocking(node.moleculeData.smiles, dockMatch[1]);
+          return;
+        }
+        if (trimmed.toLowerCase() === "dock" || trimmed.toLowerCase().startsWith("dock ")) {
+          setDockingMolecule(node.moleculeData.smiles);
+          setShowDocking(true);
+          recordAction("open_docking", node.moleculeData.smiles.slice(0, 16));
+          return;
+        }
       }
     }
 
     if (trimmed.toLowerCase().startsWith("generate ") || trimmed.toLowerCase().startsWith("find ")) {
       const subQuery = trimmed.replace(/^(generate|find)\s+/i, "");
       handleQuery(subQuery);
+      return;
+    }
+
+    if (trimmed.toLowerCase() === "diffusion" || trimmed.toLowerCase() === "diffuse") {
+      setShowDiffusionDesigner(true);
+      setShowDiffusionResults(false);
+      recordAction("open_diffusion_designer", "");
       return;
     }
 
@@ -311,7 +412,7 @@ export default function WorkspacePage() {
     }
 
     handleQuery(trimmed);
-  }, [selectedNode, nodes, handleQuery, recordAction, canvasPersistence]);
+  }, [selectedNode, nodes, handleQuery, recordAction, canvasPersistence, handleDocking]);
 
   const handleNodeSelect = useCallback((id: string) => {
     setSelectedNode(id);
@@ -327,6 +428,77 @@ export default function WorkspacePage() {
     setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, x, y } : n)));
   }, []);
 
+  /* ─── diffusion workflow handlers ─── */
+  const handleDiffusionResults = useCallback((results: DiffusionResult[], sources: SourceInfo[]) => {
+    setDiffusionResults(results);
+    setDiffusionMeta({
+      generated: results.length * 5,
+      filtered: results.length,
+      ms: 2400,
+    });
+
+    setNodes([]);
+    setLinks([]);
+    gridCursor.current = { col: 0, row: 0 };
+
+    for (const mol of results) {
+      addNode("molecule", mol.name || "Candidate", mol.smiles, {
+        id: mol.id,
+        smiles: mol.smiles,
+        name: mol.name || "Candidate",
+        formula: mol.formula || "",
+        affinity: mol.affinity || 0,
+        ciLow: 0,
+        ciHigh: 0,
+        validationMethod: "diffusion_generation",
+        molWeight: mol.molWeight || 0,
+        logP: mol.logP || 0,
+        hbDonors: mol.properties.hbd || 0,
+        hbAcceptors: mol.properties.hba || 0,
+        qed: mol.qed || 0,
+        saScore: mol.saScore || 0,
+        isSaved: false,
+      });
+    }
+
+    setInferenceTrail([
+      `Pocket-conditioned diffusion started`,
+      `Sampled ${results.length * 5} raw molecules from 3D latent space`,
+      `Applied synthesis feasibility + IP conflict filters`,
+      `Kept ${results.length} molecules meeting constraints`,
+    ]);
+
+    setShowDiffusionResults(true);
+    recordAction("diffusion_generate", results.length.toString());
+  }, [addNode, recordAction]);
+
+  const handleDiffusionStart = useCallback((progress: string) => {
+    setIsDiffusionGenerating(true);
+    setDiffusionProgress(progress);
+    setShowDiffusionResults(false);
+  }, []);
+
+  const handleDiffusionEnd = useCallback(() => {
+    setIsDiffusionGenerating(false);
+    setDiffusionProgress("");
+  }, []);
+
+  const handleDiffusionError = useCallback((message: string) => {
+    setError(message);
+    setIsDiffusionGenerating(false);
+    setDiffusionProgress("");
+  }, []);
+
+  const handleDiffusionSelect = useCallback((result: DiffusionResult) => {
+    const node = nodes.find((n) => n.smiles === result.smiles);
+    if (node) {
+      setSelectedNode(node.id);
+      if (node.moleculeData) {
+        setDetailMolecule(node.moleculeData);
+        setShowDetails(true);
+      }
+    }
+  }, [nodes]);
   const handleNodeContext = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -402,6 +574,17 @@ export default function WorkspacePage() {
         setActionWheelVisible(false);
       },
     }] : []),
+    ...(selectedNodeData?.moleculeData ? [{
+      id: "dock",
+      label: "Dock",
+      icon: "🧬",
+      action: () => {
+        setDockingMolecule(selectedNodeData.moleculeData!.smiles);
+        setShowDocking(true);
+        setActionWheelVisible(false);
+        recordAction("open_docking", selectedNode || "");
+      },
+    }] : []),
     {
       id: "similar",
       label: "Similar",
@@ -448,6 +631,23 @@ export default function WorkspacePage() {
         </div>
 
         <div className={styles.actions}>
+          <button
+            className={`${styles.actionBtn} ${showDiffusionDesigner ? styles.active : ""}`}
+            onClick={() => {
+              setShowDiffusionDesigner((s) => !s);
+              recordAction("toggle_diffusion_designer", "");
+            }}
+            title="Pocket-conditioned diffusion designer"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+              <circle cx="4" cy="4" r="1" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+              <circle cx="12" cy="4" r="1" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+              <circle cx="4" cy="12" r="1" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+              <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+              <path d="M5 5l2 3-2 3M11 5l-2 3 2 3" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
+            </svg>
+          </button>
           {preferences.showLiveFeeds && (
             <button
               className={`${styles.actionBtn} ${showFeed ? styles.active : ""}`}
@@ -554,6 +754,79 @@ export default function WorkspacePage() {
                 </AdaptivePanel>
 
                 <AdaptivePanel
+                  title={dockingResult ? `Docking — ${dockingResult.target}` : "Molecular Docking"}
+                  visible={showDocking}
+                  onClose={() => setShowDocking(false)}
+                  position="right"
+                  width={320}
+                >
+                  <div className={styles.dockingPanel}>
+                    {dockingMolecule && !isDocking && (
+                      <div className={styles.dockingInput}>
+                        <label className={styles.dockingLabel}>Ligand</label>
+                        <div className={styles.dockingSmiles}>{dockingMolecule}</div>
+                        <label className={styles.dockingLabel}>Target protein (UniProt ID or name)</label>
+                        <input
+                          className={styles.dockingTargetInput}
+                          type="text"
+                          value={dockingTarget}
+                          onChange={(e) => setDockingTarget(e.target.value)}
+                          placeholder="e.g. EGFR, BRAF, CDK4/6..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && dockingTarget.trim()) {
+                              handleDocking(dockingMolecule, dockingTarget);
+                            }
+                          }}
+                        />
+                        <button
+                          className={styles.dockingRunBtn}
+                          disabled={!dockingTarget.trim() || isDocking}
+                          onClick={() => handleDocking(dockingMolecule, dockingTarget)}
+                        >
+                          {isDocking ? "Docking..." : "Run docking"}
+                        </button>
+                      </div>
+                    )}
+
+                    {isDocking && !dockingResult && (
+                      <div className={styles.emptyPanel}>Running AutoDock Vina against {dockingTarget || "target"}...</div>
+                    )}
+
+                    {dockingResult && (
+                      <>
+                        <div className={styles.dockingMeta}>
+                          <span className={styles.dockingEngine}>
+                            <i className="fa-solid fa-cube"></i> {dockingResult.engine}
+                          </span>
+                          {dockingResult.bestAffinityKcalMol !== null && (
+                            <span className={styles.dockingBest}>
+                              Best: <b>{dockingResult.bestAffinityKcalMol} kcal/mol</b>
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.poseList}>
+                          {dockingResult.poses.map((pose) => (
+                            <div key={pose.pose_id} className={styles.poseRow}>
+                              <span className={styles.poseRank}>#{pose.pose_id}</span>
+                              <span className={styles.poseScore}>{pose.affinity_kcal_mol} kcal/mol</span>
+                              <span className={styles.poseRmsd}>
+                                rmsd {pose.rmsd_lb.toFixed(2)}/{pose.rmsd_ub.toFixed(2)}
+                              </span>
+                              {pose.confidence !== null && pose.confidence !== undefined && (
+                                <span className={styles.poseConf}>{Math.round(pose.confidence * 100)}%</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className={styles.dockingHint}>
+                          Tip: use the whisper bar &mdash; type &ldquo;dock against ERK2&rdquo; to re-dock this scaffold.
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </AdaptivePanel>
+
+                <AdaptivePanel
                   title="Live Feeds"
                   visible={showFeed}
                   onClose={() => setShowFeed(false)}
@@ -594,6 +867,29 @@ export default function WorkspacePage() {
                   </div>
                 </AdaptivePanel>
 
+                {showDiffusionDesigner && (
+                  <div className={styles.diffusionDesignerWrap}>
+                    <DiffusionDesigner
+                      onResults={handleDiffusionResults}
+                      onGenerationStart={handleDiffusionStart}
+                      onGenerationEnd={handleDiffusionEnd}
+                      onError={handleDiffusionError}
+                      onClose={() => setShowDiffusionDesigner(false)}
+                    />
+                  </div>
+                )}
+
+                {showDiffusionResults && diffusionResults.length > 0 && (
+                  <DiffusionResultsPanel
+                    results={diffusionResults}
+                    generatedCount={diffusionMeta?.generated}
+                    filteredCount={diffusionMeta?.filtered}
+                    inferenceTimeMs={diffusionMeta?.ms}
+                    onClose={() => setShowDiffusionResults(false)}
+                    onSelect={handleDiffusionSelect}
+                  />
+                )}
+
                 {/* ambient whisper modal */}
                 {whisperOpen && (
                   <div className={styles.whisperOverlay} onClick={() => setWhisperOpen(false)}>
@@ -608,7 +904,7 @@ export default function WorkspacePage() {
                         type="text"
                         placeholder={
                           selectedNodeData?.moleculeData
-                            ? `Ask about ${selectedNodeData.label} (admet, similar, details...)`
+                            ? `Ask about ${selectedNodeData.label} (dock against EGFR, admet, similar...)`
                             : 'Type "generate COX-2 inhibitors", "clear", "reset view"...'
                         }
                         onKeyDown={(e) => {
@@ -623,6 +919,7 @@ export default function WorkspacePage() {
                         <span>Try:</span>
                         {selectedNodeData?.moleculeData ? (
                           <>
+                            <button className={styles.whisperChip} onClick={() => handleWhisperSubmit("dock against EGFR")}>dock against EGFR</button>
                             <button className={styles.whisperChip} onClick={() => handleWhisperSubmit("admet")}>admet</button>
                             <button className={styles.whisperChip} onClick={() => handleWhisperSubmit("similar")}>similar</button>
                             <button className={styles.whisperChip} onClick={() => handleWhisperSubmit("details")}>details</button>

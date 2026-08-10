@@ -1,0 +1,282 @@
+.markdown {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #e5e7eb;
+  word-break: break-word;
+}
+
+.markdown > *:first-child {
+  margin-top: 0;
+}
+
+.markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0.6em 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin: 1em 0 0.4em;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+
+.markdown h1 { font-size: 1.3em; }
+.markdown h2 { font-size: 1.15em; }
+.markdown h3 { font-size: 1.05em; }
+.markdown h4 { font-size: 1em; }
+
+.markdown ul,
+.markdown ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+  list-style: disc;
+}
+
+.markdown ol {
+  list-style: decimal;
+}
+
+.markdown li {
+  margin: 0.25em 0;
+}
+
+.markdown strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.markdown em {
+  color: #d1d5db;
+}
+
+.markdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 1em 0;
+}
+
+.markdown del {
+  color: #6b7280;
+}
+
+.link {
+  color: #818cf8;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.3);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.link:hover {
+  color: #a5b4fc;
+  border-color: rgba(165, 180, 252, 0.5);
+}
+
+.inlineCode {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  padding: 1px 6px;
+  border-radius: 5px;
+  white-space: pre-wrap;
+}
+
+.codeBlock {
+  margin: 0.8em 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #14141a;
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.codeLang {
+  font-size: 11px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.codeCopyBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.codeCopyBtn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.codeCopyBtn i {
+  font-size: 10px;
+}
+
+.codePre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+
+.codePre code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #d1d5db;
+  background: transparent;
+}
+
+.codePre::-webkit-scrollbar {
+  height: 5px;
+}
+
+.codePre::-webkit-scrollbar-thumb {
+  background: #2a2a2e;
+  border-radius: 9999px;
+}
+
+/* ── highlight.js theme (dark) ── */
+.markdown .hljs {
+  color: #d1d5db;
+}
+
+.markdown .hljs-keyword,
+.markdown .hljs-selector-tag,
+.markdown .hljs-literal,
+.markdown .hljs-doctag {
+  color: #c4b5fd;
+}
+
+.markdown .hljs-string,
+.markdown .hljs-regexp,
+.markdown .hljs-title,
+.markdown .hljs-section,
+.markdown .hljs-attribute,
+.markdown .hljs-selector-id {
+  color: #86efac;
+}
+
+.markdown .hljs-number,
+.markdown .hljs-symbol,
+.markdown .hljs-bullet,
+.markdown .hljs-variable,
+.markdown .hljs-template-variable {
+  color: #fca5a5;
+}
+
+.markdown .hljs-comment,
+.markdown .hljs-quote {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.markdown .hljs-type,
+.markdown .hljs-built_in,
+.markdown .hljs-builtin-name {
+  color: #93c5fd;
+}
+
+.markdown .hljs-function .hljs-title {
+  color: #fbbf24;
+}
+
+.markdown .hljs-meta {
+  color: #a5b4fc;
+}
+
+.markdown .hljs-name,
+.markdown .hljs-tag {
+  color: #fca5f5;
+}
+
+.markdown .hljs-attr {
+  color: #fde68a;
+}
+
+/* ── LaTeX ── */
+.markdown .katex-display {
+  margin: 0.8em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown .katex {
+  font-size: 1.05em;
+  color: #e5e7eb;
+}
+
+/* ── Tables (GFM) ── */
+.tableWrap {
+  margin: 0.8em 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.table th {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fafc;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #d1d5db;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+/* ── Blockquote ── */
+.blockquote {
+  margin: 0.8em 0;
+  padding: 8px 14px;
+  border-left: 3px solid rgba(124, 58, 237, 0.6);
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: 0 8px 8px 0;
+  color: #d1d5db;
+}
+
+.blockquote p {
+  margin: 0.3em 0;
+}

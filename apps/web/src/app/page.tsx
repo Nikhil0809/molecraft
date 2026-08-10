@@ -172,9 +172,11 @@ export default function LandingPage() {
           </a>
 
           <nav className={styles.navLinks}>
-            <a href="#features" className={styles.navLink}>Platform</a>
-            <a href="#pipeline" className={styles.navLink}>Pipelines</a>
-            <a href="#comparison" className={styles.navLink}>Matrix</a>
+            <a href="#features" className={styles.navLink}>Modules</a>
+            <a href="#implementation" className={styles.navLink}>Tech Stack</a>
+            <a href="#registry" className={styles.navLink}>Registry</a>
+            <a href="#pipeline" className={styles.navLink}>Continuum</a>
+            <a href="#comparison" className={styles.navLink}>Capabilities</a>
             <a href="https://github.com" target="_blank" className={styles.navLink}>Docs</a>
           </nav>
 
@@ -192,18 +194,18 @@ export default function LandingPage() {
               <div className={styles.heroContent}>
                 <div className={styles.heroBadge}>
                   <span className={styles.heroBadgeDot} />
-                  MIT Open Source Platform
+                  MIT Licensed Open-Source Platform
                 </div>
                 <h1 className={styles.heroTitle}>
-                  AI-Powered <br /><span className={styles.heroTitleGradient}>Drug Discovery</span>
+                  Autonomous AI <br /><span className={styles.heroTitleGradient}>Drug Discovery</span>
                 </h1>
                 <p className={styles.heroDesc}>
-                  The ultimate cloud-native engine integrating generative chemistry, multi-omics target verification, predictive toxicology, and real-time laboratory workflows without boundaries.
+                  A state-of-the-art sovereign engine orchestrating 18+ containerized machine learning microservices, generative chemistry, multi-omics target verification, and programmatic laboratory sync.
                 </p>
                 <div className={styles.heroActions}>
-                  <Link href="/signup" className={styles.heroBtnPrimary}>Launch Secure Platform</Link>
-                  <a href="#features" className={styles.heroBtnSecondary}>
-                    Explore Modules <i className="fa-regular fa-arrow-down-long" />
+                  <Link href="/signup" className={styles.heroBtnPrimary}>Initialize Workspace</Link>
+                  <a href="#implementation" className={styles.heroBtnSecondary}>
+                    Explore Implementation <i className="fa-solid fa-arrow-down" />
                   </a>
                 </div>
               </div>
@@ -224,48 +226,202 @@ export default function LandingPage() {
 
           <section className={styles.statsBar}>
             <div className={styles.statsInner}>
-              <div><p className={styles.statValue}>17+</p><p className={styles.statLabel}>Core AI Engines</p></div>
-              <div><p className={styles.statValue}>140+</p><p className={styles.statLabel}>Transformers</p></div>
-              <div><p className={styles.statValue}>&lt; 4.2h</p><p className={styles.statLabel}>In-Silico Processing</p></div>
-              <div><p className={styles.statValue}>MIT</p><p className={styles.statLabel}>Open License</p></div>
+              <div>
+                <i className="fa-solid fa-cubes" style={{ color: "#7C3AED", fontSize: "18px", marginBottom: "8px", display: "inline-block" }} />
+                <p className={styles.statValue}>18+</p>
+                <p className={styles.statLabel}>Active Microservices</p>
+              </div>
+              <div>
+                <i className="fa-solid fa-network-wired" style={{ color: "#3B82F6", fontSize: "18px", marginBottom: "8px", display: "inline-block" }} />
+                <p className={styles.statValue}>25+</p>
+                <p className={styles.statLabel}>Integrated Routes</p>
+              </div>
+              <div>
+                <i className="fa-solid fa-brain" style={{ color: "#06B6D4", fontSize: "18px", marginBottom: "8px", display: "inline-block" }} />
+                <p className={styles.statValue}>12B+</p>
+                <p className={styles.statLabel}>Model Parameters</p>
+              </div>
+              <div>
+                <i className="fa-solid fa-shield-halved" style={{ color: "#34D399", fontSize: "18px", marginBottom: "8px", display: "inline-block" }} />
+                <p className={styles.statValue}>100%</p>
+                <p className={styles.statLabel}>Sovereign Deployments</p>
+              </div>
             </div>
           </section>
 
           <section className={styles.section} id="features">
             <div className={styles.sectionHeader}>
-              <p className={styles.sectionTag}>Deep Infrastructure</p>
+              <p className={styles.sectionTag}>Platform Capabilities</p>
               <h2 className={styles.sectionTitle}>Modular Architecture</h2>
             </div>
             <div className={styles.featureGrid}>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon}><i className="fa-regular fa-brain" /></div>
-                <h3 className={styles.featureTitle}>OmniMole Foundation Model</h3>
-                <p className={styles.featureDesc}>A 12B parameter multimodal model trained comprehensively on architectural configuration setups and biological sequences.</p>
+                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-solid fa-flask-vial" /></div>
+                <h3 className={styles.featureTitle}>Generative Chemistry Suite</h3>
+                <p className={styles.featureDesc}>Generate targeted molecular structural frameworks optimized against specific structural pocket properties using 3D-aware diffusion and reinforcement learning models.</p>
               </div>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-regular fa-atom" /></div>
-                <h3 className={styles.featureTitle}>AI Molecule Generator</h3>
-                <p className={styles.featureDesc}>Generate targeted molecular structural frameworks optimized natively against structural pocket properties.</p>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-puzzle-piece" /></div>
+                <h3 className={styles.featureTitle}>Structure-Based Docking</h3>
+                <p className={styles.featureDesc}>Simulate dynamic binding poses, orientations, and binding pocket affinity parameters using integrated AutoDock Vina, DiffDock, and GNINA architectures.</p>
               </div>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-regular fa-chart-scatter" /></div>
-                <h3 className={styles.featureTitle}>Docking Affinity Module</h3>
-                <p className={styles.featureDesc}>Simulate dynamic structural orientation parameters and complex binding parameters in parallel arrays.</p>
+                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-solid fa-helix" /></div>
+                <h3 className={styles.featureTitle}>RNA Therapeutics Design</h3>
+                <p className={styles.featureDesc}>Algorithmic optimization designs targeting seed regions, gapmer setups, and codon modifications to engineer stable siRNA, ASO, and mRNA candidates.</p>
               </div>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-regular fa-shield-virus" /></div>
-                <h3 className={styles.featureTitle}>ADMET Toxicity Matrix</h3>
-                <p className={styles.featureDesc}>Map comprehensive clearance benchmarks, bio-availability performance arrays, and metabolic paths safely.</p>
+                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-solid fa-shield-halved" /></div>
+                <h3 className={styles.featureTitle}>ADMET Toxicity Profiling</h3>
+                <p className={styles.featureDesc}>Map comprehensive absorption, distribution, metabolism, excretion, and toxicity profiles to filter out non-viable chemical structures before in-vitro synthesis.</p>
               </div>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-regular fa-dna" /></div>
-                <h3 className={styles.featureTitle}>Protein &amp; RNA Synthesis</h3>
-                <p className={styles.featureDesc}>Algorithmic configuration designs for advanced therapeutic antibodies and specialized PROTAC frameworks.</p>
+                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-solid fa-circle-nodes" /></div>
+                <h3 className={styles.featureTitle}>Peptide &amp; Macrocycle Core</h3>
+                <p className={styles.featureDesc}>Perform advanced designs for macrocycles and linear peptides with structural predictions for helical content, amphipathicity, and oral bioavailability.</p>
               </div>
               <div className={styles.featureCard}>
-                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-regular fa-robot" /></div>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-robot" /></div>
                 <h3 className={styles.featureTitle}>Autonomous Lab Automation</h3>
-                <p className={styles.featureDesc}>Direct synthesis compilation script outputs readable by programmatic remote execution labs.</p>
+                <p className={styles.featureDesc}>Generate validated protocol scripts compatible with Opentrons, Tecan, and standard liquid handling devices to synchronize digital designs with physical automation.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.sectionBordered} id="implementation">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionTag}>Implemented Architecture</p>
+              <h2 className={styles.sectionTitle}>What's Implemented in this Project</h2>
+            </div>
+            <div className={styles.featureGrid}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-layer-group" /></div>
+                <h3 className={styles.featureTitle}>Next.js 16 Web Dashboard</h3>
+                <p className={styles.featureDesc}>Fully functional React 19 interface. Covers 25+ app pages including workspace viewer, generation logs, clinical trials, and lab integrations.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-solid fa-server" /></div>
+                <h3 className={styles.featureTitle}>FastAPI API Gateway</h3>
+                <p className={styles.featureDesc}>Serving as the unified API orchestrator. Dynamically mounts, proxies, and routes incoming HTTP traffic to respective model engines and database nodes.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-solid fa-cubes" /></div>
+                <h3 className={styles.featureTitle}>18+ Python Microservices</h3>
+                <p className={styles.featureDesc}>Docker-compose environment running individual models like GNN property predictions, ESMFold protein structures, and ADMET toxicity pipelines.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-solid fa-magnifying-glass-plus" /></div>
+                <h3 className={styles.featureTitle}>Multi-Source RAG Pipeline</h3>
+                <p className={styles.featureDesc}>Semantic index and retriever querying databases like PubMed, ChEMBL, and patents. Powered by ChromaDB vector store and Groq/OpenAI inference.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-solid fa-brain" /></div>
+                <h3 className={styles.featureTitle}>Active AI Model Layer</h3>
+                <p className={styles.featureDesc}>Local interface scripts mapping GNN chemical models, ESM protein embeddings, MolT5 translator, and AutoDock Vina simulation parameters.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#6B7280" }}><i className="fa-solid fa-clipboard-check" /></div>
+                <h3 className={styles.featureTitle}>Unified Dev Setup &amp; Tests</h3>
+                <p className={styles.featureDesc}>Fully configures environment schemas, local database migrations, standard python pytest files, and Next.js frontend Jest test coverages.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.sectionBordered} id="registry">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionTag}>Docker Microservices Registry</p>
+              <h2 className={styles.sectionTitle}>18 Decoupled Services Orchestrated via Unified Gateway</h2>
+            </div>
+            <div className={styles.featureGrid}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-network-wired" /></div>
+                <h3 className={styles.featureTitle}>API Gateway <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8000</span></h3>
+                <p className={styles.featureDesc}>Unified ASGI entry point routing client requests, executing request schemas, and handling token authentication proxying.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-solid fa-dna" /></div>
+                <h3 className={styles.featureTitle}>Foundation Models <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8005</span></h3>
+                <p className={styles.featureDesc}>GPU-accelerated endpoint running ESMFold protein structure predictors, MolT5 chemical translators, and GNN property networks.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-solid fa-wand-magic-sparkles" /></div>
+                <h3 className={styles.featureTitle}>Generative Diffusion <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8008</span></h3>
+                <p className={styles.featureDesc}>Generates 3D-aware de-novo small molecules using equivariant diffusion models conditioned on protein pocket targets.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-solid fa-magnifying-glass-plus" /></div>
+                <h3 className={styles.featureTitle}>RAG &amp; Search Pipeline <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8002</span></h3>
+                <p className={styles.featureDesc}>Multi-tier semantic search engine querying PubMed literature, ChEMBL database, and USPTO patent files using Groq LLM reasoning.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-solid fa-puzzle-piece" /></div>
+                <h3 className={styles.featureTitle}>Molecular Docking Core <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8003</span></h3>
+                <p className={styles.featureDesc}>Computes structural ligand binding configurations and calculates affinity values using AutoDock Vina, GNINA, and DiffDock.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#6B7280" }}><i className="fa-solid fa-shield-heart" /></div>
+                <h3 className={styles.featureTitle}>ADMET Property Predictor <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8006</span></h3>
+                <p className={styles.featureDesc}>In-silico toxicology screening predicting absorption, distribution, metabolism, excretion, and mutagenicity profiles from SMILES strings.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-helix" /></div>
+                <h3 className={styles.featureTitle}>RNA Design Suite <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8022</span></h3>
+                <p className={styles.featureDesc}>Designs therapeutic RNA oligonucleotides, focusing on seed region target match, gapmer sequence designs, and mRNA stability.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-solid fa-circle-nodes" /></div>
+                <h3 className={styles.featureTitle}>Peptide Engineering <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8023</span></h3>
+                <p className={styles.featureDesc}>Calculates secondary structure properties, helical ratios, and stapling configurations for linear and macrocyclic peptide agents.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-solid fa-shield-virus" /></div>
+                <h3 className={styles.featureTitle}>Antibody Designer <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8020</span></h3>
+                <p className={styles.featureDesc}>Models light and heavy chain sequence pairings, binding affinity variables, and variable region compatibility patterns.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-solid fa-compress" /></div>
+                <h3 className={styles.featureTitle}>PROTAC Design Engine <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8021</span></h3>
+                <p className={styles.featureDesc}>Models ternary complexes, linker structural alignments, and target-ligase binding affinities to engineer active protein degraders.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-solid fa-chart-line" /></div>
+                <h3 className={styles.featureTitle}>Clinical Trials Oracle <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8030</span></h3>
+                <p className={styles.featureDesc}>Evaluates clinical trial protocol designs to predict success probabilities, hazard ratios, and phase transition risks.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#6B7280" }}><i className="fa-solid fa-gauge-high" /></div>
+                <h3 className={styles.featureTitle}>Physics Sim &amp; MD <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8050</span></h3>
+                <p className={styles.featureDesc}>Configures and runs molecular dynamics simulations, energy minimizations, and thermodynamic binding pathway calculations.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#3B82F6" }}><i className="fa-solid fa-microscope" /></div>
+                <h3 className={styles.featureTitle}>Lab Automation API <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8040</span></h3>
+                <p className={styles.featureDesc}>Compiles digital molecule designs into programmatic liquid handler command scripts targeting Opentrons and Tecan instruments.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#7C3AED" }}><i className="fa-solid fa-table-cells" /></div>
+                <h3 className={styles.featureTitle}>Proteochemometrics <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8004</span></h3>
+                <p className={styles.featureDesc}>Computes compound-target interaction matrices using deep networks to model cross-reactivity and off-target risks.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#06B6D4" }}><i className="fa-solid fa-comments" /></div>
+                <h3 className={styles.featureTitle}>Molecule Q&amp;A Chat <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8007</span></h3>
+                <p className={styles.featureDesc}>An intelligent chat agent answering structural, biochemical, and literature queries about user-submitted molecules.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#34D399" }}><i className="fa-solid fa-scale-balanced" /></div>
+                <h3 className={styles.featureTitle}>Patent &amp; IP Analyzer <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8060</span></h3>
+                <p className={styles.featureDesc}>Mines and extracts chemical structure descriptions and therapeutic target claims from USPTO and WIPO patent filings.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#A78BFA" }}><i className="fa-solid fa-barcode" /></div>
+                <h3 className={styles.featureTitle}>Omics Target Finder <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8010</span></h3>
+                <p className={styles.featureDesc}>Identifies differential gene expressions and biological pathway correlations to validate target relevance in diseased tissues.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon} style={{ color: "#6B7280" }}><i className="fa-solid fa-database" /></div>
+                <h3 className={styles.featureTitle}>Ingestion &amp; Vector DB <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>Port 8011</span></h3>
+                <p className={styles.featureDesc}>Manages local context indexing using ChromaDB to enable document retrieval and semantic searches across scientific papers.</p>
               </div>
             </div>
           </section>
@@ -277,24 +433,30 @@ export default function LandingPage() {
             </div>
             <div className={styles.pipelineList}>
               <div className={styles.pipelineItem}>
-                <div className={styles.pipelinePhase} style={{ color: "#06B6D4" }}>Phase 01</div>
+                <div className={styles.pipelinePhase} style={{ color: "#06B6D4" }}>
+                  <i className="fa-solid fa-magnifying-glass-chart" style={{ marginRight: "8px" }} /> Phase 01
+                </div>
                 <div className={styles.pipelineContent}>
-                  <h4 className={styles.pipelineTitle}>Target Identification &amp; Resolution</h4>
-                  <p className={styles.pipelineDesc}>Bulk extraction and classification of dynamic causal mutations through deep multi-graph networks.</p>
+                  <h4 className={styles.pipelineTitle}>Literature Synthesis &amp; Multi-Omics RAG</h4>
+                  <p className={styles.pipelineDesc}>Bulk retrieval of clinical trial records, patent logs, and biological literature context coupled with local mutation analysis to isolate high-value disease targets.</p>
                 </div>
               </div>
               <div className={styles.pipelineItem}>
-                <div className={styles.pipelinePhase} style={{ color: "#7C3AED" }}>Phase 02</div>
+                <div className={styles.pipelinePhase} style={{ color: "#7C3AED" }}>
+                  <i className="fa-solid fa-flask" style={{ marginRight: "8px" }} /> Phase 02
+                </div>
                 <div className={styles.pipelineContent}>
-                  <h4 className={styles.pipelineTitle}>Generative Structural Synthesis</h4>
-                  <p className={styles.pipelineDesc}>Millions of de novo compounds generated, evaluated, and ranked concurrently for designated active sites.</p>
+                  <h4 className={styles.pipelineTitle}>Generative Structure Optimization</h4>
+                  <p className={styles.pipelineDesc}>Coordinate generative diffusion algorithms and scaffold-hopping parameters to generate millions of de novo therapeutic candidates targeting designated active pocket sites.</p>
                 </div>
               </div>
               <div className={styles.pipelineItem}>
-                <div className={styles.pipelinePhase} style={{ color: "#3B82F6" }}>Phase 03</div>
+                <div className={styles.pipelinePhase} style={{ color: "#3B82F6" }}>
+                  <i className="fa-solid fa-shield-halved" style={{ marginRight: "8px" }} /> Phase 03
+                </div>
                 <div className={styles.pipelineContent}>
-                  <h4 className={styles.pipelineTitle}>In-Silico Safety Matrix Screening</h4>
-                  <p className={styles.pipelineDesc}>Advanced safety profiling filtering out non-viable molecules using chemical graph analysis pipelines.</p>
+                  <h4 className={styles.pipelineTitle}>In-Silico Docking &amp; ADMET Profiling</h4>
+                  <p className={styles.pipelineDesc}>Run AutoDock Vina pose prediction, evaluate toxicity properties (ADMET) via machine learning, and construct execution script arrays for liquid-handling synthesis.</p>
                 </div>
               </div>
             </div>
@@ -324,21 +486,21 @@ export default function LandingPage() {
                   </tr>
                   <tr className={styles.tableRow}>
                     <td className={styles.tableCellBold}>De Novo Architecture</td>
-                    <td className={styles.tableCellCheck}><i className="fa-regular fa-check" /> Native</td>
+                    <td className={styles.tableCellCheck}><i className="fa-solid fa-circle-check" /> Native</td>
                     <td className={styles.tableCell}>Module Add-on</td>
                     <td className={styles.tableCell}>Cloud Only</td>
                   </tr>
                   <tr className={styles.tableRow}>
                     <td className={styles.tableCellBold}>On-Prem Deployment</td>
-                    <td className={styles.tableCellCheck}><i className="fa-regular fa-check" /> Supported</td>
+                    <td className={styles.tableCellCheck}><i className="fa-solid fa-circle-check" /> Supported</td>
                     <td className={styles.tableCell}>Unavailable</td>
                     <td className={styles.tableCell}>Restricted</td>
                   </tr>
                   <tr className={styles.tableRow}>
                     <td className={styles.tableCellBold}>Programmatic Lab Sync</td>
-                    <td className={styles.tableCellCheck}><i className="fa-regular fa-check" /> Unified API</td>
+                    <td className={styles.tableCellCheck}><i className="fa-solid fa-circle-check" /> Unified API</td>
                     <td className={styles.tableCell}>No Integration</td>
-                    <td className={styles.tableCellCheck}><i className="fa-regular fa-check" /> Internal APIs</td>
+                    <td className={styles.tableCellCheck}><i className="fa-solid fa-circle-check" /> Internal APIs</td>
                   </tr>
                 </tbody>
               </table>
@@ -347,10 +509,10 @@ export default function LandingPage() {
 
           <section className={styles.ctaSection}>
             <h2 className={styles.ctaTitle}>Accelerate Molecular Design</h2>
-            <p className={styles.ctaDesc}>Deploy individual models locally or coordinate high-throughput operations instantly via unified enterprise arrays.</p>
+            <p className={styles.ctaDesc}>Deploy sovereign foundation models locally or orchestrate automated high-throughput workflows via unified docker configurations.</p>
             <div className={styles.ctaActions}>
-              <Link href="/signup" className={styles.heroBtnPrimary}>Initialize Instance</Link>
-              <a href="https://github.com" target="_blank" className={styles.ctaLink}>Explore Repository</a>
+              <Link href="/signup" className={styles.heroBtnPrimary}>Initialize Dev Cluster</Link>
+              <a href="https://github.com" target="_blank" className={styles.ctaLink}>View GitHub Repo</a>
             </div>
           </section>
         </main>
@@ -384,7 +546,7 @@ export default function LandingPage() {
 
             {authError && (
               <div className={styles.authError}>
-                <i className="fa-regular fa-circle-exclamation" />
+                <i className="fa-solid fa-circle-exclamation" />
                 <span>{authError}</span>
               </div>
             )}
@@ -395,14 +557,14 @@ export default function LandingPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.inputLabel}>Full Profile Name</label>
                     <div className={styles.inputWrapper}>
-                      <div className={styles.inputIcon}><i className="fa-regular fa-user" /></div>
+                      <div className={styles.inputIcon}><i className="fa-solid fa-user" /></div>
                       <input type="text" value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Dr. Evelyn Harper" className={styles.input} />
                     </div>
                   </div>
                   <div className={styles.inputGroup}>
                     <label className={styles.inputLabel}>Organization / Lab</label>
                     <div className={styles.inputWrapper}>
-                      <div className={styles.inputIcon}><i className="fa-regular fa-building-columns" /></div>
+                      <div className={styles.inputIcon}><i className="fa-solid fa-building-columns" /></div>
                       <input type="text" value={authOrg} onChange={(e) => setAuthOrg(e.target.value)} placeholder="Stanford BioML Group" className={styles.input} />
                     </div>
                   </div>
@@ -412,7 +574,7 @@ export default function LandingPage() {
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Institutional Email</label>
                 <div className={styles.inputWrapper}>
-                  <div className={styles.inputIcon}><i className="fa-regular fa-envelope" /></div>
+                  <div className={styles.inputIcon}><i className="fa-solid fa-envelope" /></div>
                   <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="evelyn.harper@stanford.edu" className={styles.input} required />
                 </div>
               </div>
@@ -423,7 +585,7 @@ export default function LandingPage() {
                   {authMode === "signin" && <a href="#" className={styles.forgotLink} onClick={(e) => { e.preventDefault(); alert("Password reset routing is integrated via institutional SMTP relays."); }}>Forgot key?</a>}
                 </div>
                 <div className={styles.inputWrapper}>
-                  <div className={styles.inputIcon}><i className="fa-regular fa-lock" /></div>
+                  <div className={styles.inputIcon}><i className="fa-solid fa-lock" /></div>
                   <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="••••••••••••" className={styles.input} required />
                 </div>
               </div>
@@ -467,35 +629,45 @@ export default function LandingPage() {
               <img src="/logo.png" alt="MoleCraft Logo" className={styles.footerLogoImg} />
               <span className={styles.footerLogoText}>MoleCraft</span>
             </a>
-            <p className={styles.footerDesc}>Advanced sovereign model structures engineering future drug arrays safely under structural open automation pipelines.</p>
+            <p className={styles.footerDesc}>An open-source, sovereign AI engine for drug discovery, target verification, and programmatic lab automation. Fully self-hostable under standard MIT protocol parameters.</p>
           </div>
           <div className={styles.footerCol}>
-            <h5 className={styles.footerColTitle}>Platform</h5>
+            <h5 className={styles.footerColTitle}><i className="fa-solid fa-cubes" style={{ marginRight: "6px" }} /> Platform Modules</h5>
             <ul className={styles.footerLinks}>
-              <li><a href="#features" className={styles.footerLink}>OmniMole Foundation</a></li>
-              <li><a href="#features" className={styles.footerLink}>Synthesis Core</a></li>
-              <li><a href="#pipeline" className={styles.footerLink}>Automated Pipelines</a></li>
+              <li><a href="#features" className={styles.footerLink}>Generative Chemistry</a></li>
+              <li><a href="#features" className={styles.footerLink}>Structure-Based Docking</a></li>
+              <li><a href="#features" className={styles.footerLink}>RNA Therapeutics</a></li>
+              <li><a href="#features" className={styles.footerLink}>Peptide &amp; PROTAC</a></li>
+              <li><a href="#features" className={styles.footerLink}>ADMET Toxicity</a></li>
+              <li><a href="#features" className={styles.footerLink}>Lab Automation</a></li>
             </ul>
           </div>
           <div className={styles.footerCol}>
-            <h5 className={styles.footerColTitle}>Resources</h5>
+            <h5 className={styles.footerColTitle}><i className="fa-solid fa-layer-group" style={{ marginRight: "6px" }} /> Implemented Stack</h5>
             <ul className={styles.footerLinks}>
-              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>GitHub Source</a></li>
-              <li><a href="#" className={styles.footerLink}>BioML Standards</a></li>
-              <li><a href="#" className={styles.footerLink}>Academic Documentation</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>Next.js Web UI</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>FastAPI API Gateway</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>Docker Microservices</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>ChromaDB Vector Store</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>Neon PostgreSQL</a></li>
+              <li><a href="#implementation" className={styles.footerLink}>Swagger API Docs</a></li>
             </ul>
           </div>
           <div className={styles.footerCol}>
-            <h5 className={styles.footerColTitle}>Security</h5>
+            <h5 className={styles.footerColTitle}><i className="fa-solid fa-code" style={{ marginRight: "6px" }} /> Developer Resources</h5>
             <ul className={styles.footerLinks}>
-              <li><a href="#" className={styles.footerLink}>Isolation Matrices</a></li>
-              <li><a href="#" className={styles.footerLink}>Compliance Rules</a></li>
+              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>GitHub Repository</a></li>
+              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>Docker Quickstart</a></li>
+              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>pytest Test Suites</a></li>
+              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>Jest Coverage</a></li>
+              <li><a href="https://github.com" target="_blank" className={styles.footerLink}>MIT License Details</a></li>
+              <li><a href="mailto:support@molecraft.ai" className={styles.footerLink}>Academic Citation</a></li>
             </ul>
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <span>&copy; 2026 MoleCraft Systems Inc. Provided openly via standard MIT protocol distribution parameters.</span>
-          <span className={styles.footerBadge}>Secure Cryptographic Operations Only</span>
+          <span>&copy; 2026 MoleCraft Systems Inc. Sovereign deployment and cryptographic security are fully supported.</span>
+          <span className={styles.footerBadge}>Local &amp; Sovereign Encryption Active</span>
         </div>
       </footer>
     </div>

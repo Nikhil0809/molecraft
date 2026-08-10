@@ -1,21 +1,32 @@
 import asyncio
+import json
+import os
 import time
 import uuid
-import os
-from typing import Optional
 from collections import OrderedDict
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 import httpx
-
-from sources import chembl, pubmed, pubchem, uniprot, tavily, patent, clinical_trials, wikipedia, web_search
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+from sources import (
+    chembl,
+    clinical_trials,
+    patent,
+    pubchem,
+    pubmed,
+    tavily,
+    uniprot,
+    web_search,
+    wikipedia,
+)
 
 app = FastAPI(title="MoleCraft RAG Pipeline", version="2.0.0")
 
 PUBMED_API_KEY = os.environ.get("PUBMED_API_KEY", "")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 INGESTION_API_URL = os.environ.get("INGESTION_API_URL", "http://localhost:8011")
 
 
@@ -23,7 +34,7 @@ class RAGRequest(BaseModel):
     query: str = Field(..., description="Search query (target protein, disease, SMILES)")
     depth: str = Field(default="normal", pattern="^(normal|deep|ultra)$")
     citation_tier: str = Field(default="all", pattern="^(all|t1_t2|t1)$")
-    pubmed_api_key: Optional[str] = None
+    pubmed_api_key: str | None = None
 
 
 class SourceResult(BaseModel):
@@ -56,8 +67,12 @@ class SemanticSearchRequest(BaseModel):
 class GroqReasonRequest(BaseModel):
     query: str = Field(..., description="User question")
     context_chunks: list[dict] = Field(default_factory=list, description="Retrieved context chunks")
-    model: str = Field(default="mixtral-8x7b-32768", description="Groq model ID")
+    model: str = Field(default="llama-3.3-70b-versatile", description="Groq model ID")
     n_results: int = Field(default=10, ge=1, le=50, description="Number of semantic search results")
+    history: list[dict] = Field(
+        default_factory=list,
+        description="Prior conversation turns as [{'role': 'user'|'assistant', 'content': str}]",
+    )
 
 
 class GroqReasonResponse(BaseModel):
@@ -69,6 +84,7 @@ class GroqReasonResponse(BaseModel):
 
 # ── In-memory cache with TTL ──────────────────────────────────────────────
 
+
 class TTLCache:
     def __init__(self, ttl_seconds: int = 300, max_size: int = 128):
         self._ttl = ttl_seconds
@@ -78,7 +94,7 @@ class TTLCache:
     def _key(self, req: RAGRequest) -> str:
         return f"{req.query}::depth={req.depth}::tier={req.citation_tier}"
 
-    def get(self, req: RAGRequest) -> Optional[RAGResponse]:
+    def get(self, req: RAGRequest) -> RAGResponse | None:
         key = self._key(req)
         entry = self._store.get(key)
         if entry is None:
@@ -147,6 +163,7 @@ SEARCH_FN = {
 
 # ── ChromaDB / Ingestion helpers ──────────────────────────────────────────
 
+
 async def _semantic_search(query: str, n_results: int = 10) -> list[dict]:
     if not INGESTION_API_URL:
         return []
@@ -164,20 +181,36 @@ async def _semantic_search(query: str, n_results: int = 10) -> list[dict]:
     return []
 
 
-async def _groq_reason(query: str, context: str, model: str = "mixtral-8x7b-32768") -> str:
-    if not GROQ_API_KEY:
-        return "Groq API key not configured."
+SYSTEM_PROMPT = (
+    "You are MoleCraft AI, a precise scientific assistant specialized in molecular design, "
+    "drug discovery, and computational chemistry. Answer concisely and accurately based on "
+    "the research context provided. Cite sources where relevant. If the context doesn't have "
+    "enough information, say so and provide your best scientific knowledge."
+)
 
-    system_prompt = (
-        "You are MoleCraft AI, a precise scientific assistant specialized in molecular design, "
-        "drug discovery, and computational chemistry. Answer concisely and accurately based on "
-        "the research context provided. Cite sources where relevant. If the context doesn't have "
-        "enough information, say so and provide your best scientific knowledge."
-    )
 
+def _build_messages(query: str, context: str, history: list[dict] | None) -> list[dict]:
+    messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for turn in (history or [])[-8:]:
+        role = str(turn.get("role", "")).lower()
+        content = turn.get("content")
+        if role in ("user", "assistant") and isinstance(content, str) and content.strip():
+            messages.append({"role": role, "content": content})
     user_prompt = query
     if context:
         user_prompt = f"Research Context:\n{context}\n\nQuestion: {query}"
+    messages.append({"role": "user", "content": user_prompt})
+    return messages
+
+
+async def _groq_reason(
+    query: str,
+    context: str,
+    model: str = "llama-3.3-70b-versatile",
+    history: list[dict] | None = None,
+) -> str:
+    if not GROQ_API_KEY:
+        return "Groq API key not configured."
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
@@ -189,10 +222,7 @@ async def _groq_reason(query: str, context: str, model: str = "mixtral-8x7b-3276
                 },
                 json={
                     "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
+                    "messages": _build_messages(query, context, history),
                     "temperature": 0,
                     "max_tokens": 2048,
                 },
@@ -206,7 +236,58 @@ async def _groq_reason(query: str, context: str, model: str = "mixtral-8x7b-3276
     return ""
 
 
+async def _groq_reason_stream(
+    query: str,
+    context: str,
+    model: str = "llama-3.3-70b-versatile",
+    history: list[dict] | None = None,
+):
+    """Stream tokens from Groq API via SSE."""
+    if not GROQ_API_KEY:
+        yield f"data: {json.dumps({'error': 'Groq API key not configured'})}\n\n"
+        return
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            async with client.stream(
+                "POST",
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": _build_messages(query, context, history),
+                    "temperature": 0,
+                    "max_tokens": 2048,
+                    "stream": True,
+                },
+            ) as resp:
+                if resp.is_success:
+                    async for line in resp.aiter_lines():
+                        if line.startswith("data: "):
+                            data_str = line[6:]
+                            if data_str.strip() == "[DONE]":
+                                yield f"data: {json.dumps({'done': True})}\n\n"
+                                return
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                content = delta.get("content", "")
+                                if content:
+                                    yield f"data: {json.dumps({'token': content})}\n\n"
+                            except json.JSONDecodeError:
+                                pass
+                else:
+                    yield f"data: {json.dumps({'error': f'Groq API error: {resp.status_code}'})}\n\n"
+    except Exception as e:
+        print(f"[RAG] Groq stream error: {e}")
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────
+
 
 @app.post("/search")
 async def search(req: RAGRequest) -> RAGResponse:
@@ -224,19 +305,21 @@ async def search(req: RAGRequest) -> RAGResponse:
     start = time.time()
 
     tasks = {}
-    for name, tier, dep_env in active_sources:
+    for name, _, _ in active_sources:
         fn = SEARCH_FN[name]
         if name == "PubMed":
             tasks[name] = fn(query, req.depth, api_key)
         else:
             tasks[name] = fn(query, req.depth)
 
-    results = await asyncio.gather(*[tasks[n] for n, _, _ in active_sources], return_exceptions=True)
+    results = await asyncio.gather(
+        *[tasks[n] for n, _, _ in active_sources], return_exceptions=True
+    )
 
     elapsed = time.time() - start
 
     source_results: dict[str, dict] = {}
-    for (name, tier, _), res in zip(active_sources, results):
+    for (name, _, _), res in zip(active_sources, results, strict=False):
         if isinstance(res, Exception):
             print(f"[{name}] Exception: {res}")
             source_results[name] = {"status": "error", "result_count": 0, "citations": []}
@@ -254,23 +337,30 @@ async def search(req: RAGRequest) -> RAGResponse:
             "error": f"{name} query failed",
         }
         message = messages.get(status, f"{name}: {status}")
-        sources.append(SourceResult(
-            name=name, status=status, result_count=count, tier=tier,
-            message=f"{message} ({elapsed:.1f}s)",
-        ))
+        sources.append(
+            SourceResult(
+                name=name,
+                status=status,
+                result_count=count,
+                tier=tier,
+                message=f"{message} ({elapsed:.1f}s)",
+            )
+        )
 
     all_citations = []
     for name, tier, _ in active_sources:
         res = source_results[name]
         for cit in res.get("citations", []):
-            all_citations.append(CitationResult(
-                id=str(uuid.uuid4()),
-                source=cit["source"],
-                title=cit["title"],
-                year=cit.get("year", 2024),
-                url=cit.get("url", ""),
-                tier=cit.get("tier", tier),
-            ))
+            all_citations.append(
+                CitationResult(
+                    id=str(uuid.uuid4()),
+                    source=cit["source"],
+                    title=cit["title"],
+                    year=cit.get("year", 2024),
+                    url=cit.get("url", ""),
+                    tier=cit.get("tier", tier),
+                )
+            )
 
     seen_urls: set[str] = set()
     unique_citations: list[CitationResult] = []
@@ -303,7 +393,14 @@ async def semantic_search(req: SemanticSearchRequest):
 @app.post("/reason")
 async def reason(req: GroqReasonRequest) -> GroqReasonResponse:
     if not GROQ_API_KEY:
-        raise HTTPException(503, "Groq API key not configured")
+        return GroqReasonResponse(
+            answer=(
+                "A Groq API key is not configured, so model-based reasoning is unavailable. "
+                f"The query was: {req.query}. Set GROQ_API_KEY to enable full answers."
+            ),
+            model_used="fallback",
+            chunks_used=0,
+        )
 
     chunks_text = []
     for i, chunk in enumerate(req.context_chunks[:10]):
@@ -318,7 +415,7 @@ async def reason(req: GroqReasonRequest) -> GroqReasonResponse:
 
     context = "\n\n".join(chunks_text) if chunks_text else ""
 
-    answer = await _groq_reason(req.query, context, req.model)
+    answer = await _groq_reason(req.query, context, req.model, req.history)
 
     if not answer:
         answer = "I could not generate a complete answer with the available context."
@@ -336,6 +433,38 @@ async def query_endpoint(req: GroqReasonRequest) -> GroqReasonResponse:
     chunks = semantic_results or req.context_chunks
     req.context_chunks = chunks
     return await reason(req)
+
+
+@app.post("/query/stream")
+async def query_stream_endpoint(req: GroqReasonRequest):
+    """Stream tokens from Groq reasoning with semantic search context."""
+    if not GROQ_API_KEY:
+        raise HTTPException(503, "Groq API key not configured")
+
+    semantic_results = await _semantic_search(req.query, req.n_results or 10)
+    chunks = semantic_results or req.context_chunks
+
+    chunks_text = []
+    for i, chunk in enumerate(chunks[:10]):
+        text = chunk.get("text", "") or chunk.get("document", "")
+        source = chunk.get("metadata", {}).get("source", chunk.get("source", "unknown"))
+        score = chunk.get("distance", chunk.get("score", 0))
+        if isinstance(score, float):
+            score_str = f"{score:.3f}"
+        else:
+            score_str = str(score)
+        chunks_text.append(f"[{i+1}] Source: {source} (relevance: {score_str})\n{text}")
+
+    context = "\n\n".join(chunks_text) if chunks_text else ""
+
+    return StreamingResponse(
+        _groq_reason_stream(req.query, context, req.model, req.history),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @app.get("/health")

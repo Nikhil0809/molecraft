@@ -1,10 +1,9 @@
 import httpx
-from typing import Optional
 
 CHEMBL_API = "https://www.ebi.ac.uk/chembl/api/data"
 
 
-async def search_target(query: str, timeout: float = 20) -> Optional[str]:
+async def search_target(query: str, timeout: float = 20) -> str | None:
     """Search ChEMBL for a target by name, return first target chembl_id."""
     # Try both search endpoints
     urls = [
@@ -38,22 +37,32 @@ async def search_compounds(query: str, limit: int = 10, timeout: float = 20) -> 
                 molecules = data.get("molecules", [])
                 for mol in molecules[:limit]:
                     chembl_id = mol.get("molecule_chembl_id", "")
-                    name = mol.get("pref_name", "") or mol.get("molecule_structures", {}).get("canonical_smiles", "")
+                    name = mol.get("pref_name", "") or mol.get("molecule_structures", {}).get(
+                        "canonical_smiles", ""
+                    )
                     smi = mol.get("molecule_structures", {}).get("canonical_smiles", "")
                     if chembl_id and smi:
-                        results.append({
-                            "molecule_chembl_id": chembl_id,
-                            "name": name,
-                            "smiles": smi,
-                        })
+                        results.append(
+                            {
+                                "molecule_chembl_id": chembl_id,
+                                "name": name,
+                                "smiles": smi,
+                            }
+                        )
     except Exception as e:
         print(f"[ChEMBL] Molecule search error: {e}")
     return results
 
 
-async def search_bioactivities(target_chembl_id: str, limit: int = 20, timeout: float = 20) -> list[dict]:
+async def search_bioactivities(
+    target_chembl_id: str, limit: int = 20, timeout: float = 20
+) -> list[dict]:
     url = f"{CHEMBL_API}/activity.json"
-    params = {"target_chembl_id": target_chembl_id, "limit": limit, "order_by": "standard_value asc"}
+    params = {
+        "target_chembl_id": target_chembl_id,
+        "limit": limit,
+        "order_by": "standard_value asc",
+    }
     results = []
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -69,14 +78,16 @@ async def search_bioactivities(target_chembl_id: str, limit: int = 20, timeout: 
                     std_units = act.get("standard_units", "")
                     relation = act.get("standard_relation", "=")
                     if mol_chembl_id and smi:
-                        results.append({
-                            "molecule_chembl_id": mol_chembl_id,
-                            "smiles": smi,
-                            "standard_type": std_type,
-                            "standard_value": std_val,
-                            "standard_units": std_units,
-                            "relation": relation,
-                        })
+                        results.append(
+                            {
+                                "molecule_chembl_id": mol_chembl_id,
+                                "smiles": smi,
+                                "standard_type": std_type,
+                                "standard_value": std_val,
+                                "standard_units": std_units,
+                                "relation": relation,
+                            }
+                        )
     except Exception as e:
         print(f"[ChEMBL] Bioactivity error: {e}")
     return results
@@ -94,13 +105,21 @@ async def search(query: str, depth: str = "normal") -> dict:
     if target_id:
         activities = await search_bioactivities(target_id, limit=max_citations * 4)
         for act in activities[:max_citations]:
-            val_str = f"{act['relation']}{act['standard_value']} {act['standard_units']}" if act['standard_value'] else "N/A"
+            val_str = (
+                f"{act['relation']}{act['standard_value']} {act['standard_units']}"
+                if act["standard_value"]
+                else "N/A"
+            )
             title = f"{act['molecule_chembl_id']}: {act['standard_type']} = {val_str}"
-            citations.append({
-                "source": "ChEMBL", "title": title, "year": 2024,
-                "url": f"https://www.ebi.ac.uk/chembl/explore/target/{target_id}",
-                "tier": 1,
-            })
+            citations.append(
+                {
+                    "source": "ChEMBL",
+                    "title": title,
+                    "year": 2024,
+                    "url": f"https://www.ebi.ac.uk/chembl/explore/target/{target_id}",
+                    "tier": 1,
+                }
+            )
             all_results.append(act)
 
     # Try 2: Search by compound name directly
@@ -109,22 +128,28 @@ async def search(query: str, depth: str = "normal") -> dict:
         for c in compounds[:max_citations]:
             name = c.get("name", c["molecule_chembl_id"])
             title = f"{name}: {c['smiles'][:60]}"
-            citations.append({
-                "source": "ChEMBL", "title": title, "year": 2024,
-                "url": f"https://www.ebi.ac.uk/chembl/compound_report_card/{c['molecule_chembl_id']}/",
-                "tier": 1,
-            })
+            citations.append(
+                {
+                    "source": "ChEMBL",
+                    "title": title,
+                    "year": 2024,
+                    "url": f"https://www.ebi.ac.uk/chembl/compound_report_card/{c['molecule_chembl_id']}/",
+                    "tier": 1,
+                }
+            )
             all_results.append(c)
 
     # Try 3: Fallback — return search URL for the query
     if not citations:
-        citations.append({
-            "source": "ChEMBL",
-            "title": f"Search results for '{query}' — ChEMBL target database",
-            "year": 2024,
-            "url": f"https://www.ebi.ac.uk/chembl/explore/target?search={query}",
-            "tier": 1,
-        })
+        citations.append(
+            {
+                "source": "ChEMBL",
+                "title": f"Search results for '{query}' — ChEMBL target database",
+                "year": 2024,
+                "url": f"https://www.ebi.ac.uk/chembl/explore/target?search={query}",
+                "tier": 1,
+            }
+        )
 
     return {
         "status": "done" if citations else "empty",

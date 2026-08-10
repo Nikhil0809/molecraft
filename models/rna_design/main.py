@@ -1,11 +1,9 @@
-import math
 import random
 import time
 import uuid
-from typing import Optional
 
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="OmniMole RNA Therapeutics Design", version="1.0.0")
@@ -16,8 +14,20 @@ RNA_COMPLEMENT = {"A": "U", "U": "A", "C": "G", "G": "C"}
 SIRNA_SEED = "UGGCCAACUGA"
 
 ASO_GAPMER_PATTERNS: dict[str, list[str]] = [
-    "CCCT", "AGGG", "TTAGGG", "GGCG", "CGCC", "GCTG", "CAGC",
-    "ACTG", "TGAC", "GTCA", "TCAG", "CTGA", "GACT", "AGTC",
+    "CCCT",
+    "AGGG",
+    "TTAGGG",
+    "GGCG",
+    "CGCC",
+    "GCTG",
+    "CAGC",
+    "ACTG",
+    "TGAC",
+    "GTCA",
+    "TCAG",
+    "CTGA",
+    "GACT",
+    "AGTC",
 ]
 
 
@@ -119,12 +129,12 @@ def reverse_complement(seq: str) -> str:
     return "".join(RNA_COMPLEMENT.get(n, n) for n in seq.upper()[::-1])
 
 
-def design_sirna(target: str, length: int) -> tuple[str, str, str]:
+def _design_sirna_worker(target: str, length: int) -> tuple[str, str, str]:
     region = "CDS"
     if len(target) < length + 10:
         target = target * ((length + 50) // len(target) + 1)
     start = random.randint(0, max(0, len(target) - length - 5))
-    sense = target[start:start + length]
+    sense = target[start : start + length]
     antisense = reverse_complement(sense)
     return sense, antisense, region
 
@@ -142,31 +152,44 @@ def design_sirna(req: siRNADesignRequest):
         target_seq = "AUGGCGACCCUGGAUGAGCU"
 
     designs = []
-    for i in range(req.count):
-        sense, antisense, region = design_sirna(target_seq, req.length)
+    for _ in range(req.count):
+        sense, antisense, region = _design_sirna_worker(target_seq, req.length)
         gc = gc_content(sense)
         tm = melting_temp(sense)
         off_target = round(float(np.random.beta(2, 5)), 3)
         seed = sense[2:8]
         seed_avoided = seed not in req.avoid_seeds
 
-        efficacy = round(float(max(0.1, min(0.95, 0.5 + 0.3 * (0.5 - abs(gc - 0.5)) - off_target * 0.3 + 0.1 * seed_avoided))), 3)
+        efficacy = round(
+            float(
+                max(
+                    0.1,
+                    min(
+                        0.95,
+                        0.5 + 0.3 * (0.5 - abs(gc - 0.5)) - off_target * 0.3 + 0.1 * seed_avoided,
+                    ),
+                )
+            ),
+            3,
+        )
 
         mod_pattern = "2'-OMe + PS" if random.random() > 0.3 else "2'-F + 2'-OMe"
 
-        designs.append(siRNAHit(
-            id=str(uuid.uuid4()),
-            sense_strand=sense,
-            antisense_strand=antisense,
-            target_gene=gene,
-            target_region=region,
-            gc_content=gc,
-            melting_temp_c=tm,
-            off_target_score=off_target,
-            efficacy_score=efficacy,
-            seed_avoided=seed_avoided,
-            modification_pattern=mod_pattern,
-        ))
+        designs.append(
+            siRNAHit(
+                id=str(uuid.uuid4()),
+                sense_strand=sense,
+                antisense_strand=antisense,
+                target_gene=gene,
+                target_region=region,
+                gc_content=gc,
+                melting_temp_c=tm,
+                off_target_score=off_target,
+                efficacy_score=efficacy,
+                seed_avoided=seed_avoided,
+                modification_pattern=mod_pattern,
+            )
+        )
 
     designs.sort(key=lambda s: -s.efficacy_score)
     return siRNADesignResponse(
@@ -185,15 +208,20 @@ def design_aso(req: ASODesignRequest):
         target = target * (req.length // len(target) + 1)
 
     designs = []
-    for i in range(req.count):
+    for _ in range(req.count):
         offset = random.randint(0, max(0, len(target) - req.length))
-        seq = target[offset:offset + req.length]
+        seq = target[offset : offset + req.length]
         gc = gc_content(seq)
         tm = melting_temp(seq)
 
         rnase_h = round(float(min(0.9, 0.3 + gc * 0.5)), 3)
         duplex = round(float(min(1.0, 0.5 + gc * 0.3 - abs(tm - 55) * 0.01)), 3)
-        self_comp = round(float(sum(1 for j in range(len(seq) // 2) if seq[j] == seq[-1 - j]) / max(len(seq) / 2, 1)), 3)
+        self_comp = round(
+            float(
+                sum(1 for j in range(len(seq) // 2) if seq[j] == seq[-1 - j]) / max(len(seq) / 2, 1)
+            ),
+            3,
+        )
 
         gapmer_config = {}
         if req.gapmer:
@@ -201,24 +229,26 @@ def design_aso(req: ASODesignRequest):
             if gap_len > 0:
                 gapmer_config = {
                     "5_wing": seq[:5],
-                    "gap": seq[5:5 + gap_len],
-                    "3_wing": seq[5 + gap_len:],
+                    "gap": seq[5 : 5 + gap_len],
+                    "3_wing": seq[5 + gap_len :],
                     "gap_length": gap_len,
                     "modifications": "PS + 2'-OMe wings, DNA gap",
                 }
 
-        designs.append(ASOHit(
-            id=str(uuid.uuid4()),
-            sequence=seq,
-            length=len(seq),
-            gc_content=gc,
-            melting_temp_c=tm,
-            rnase_h_activity=rnase_h,
-            duplex_stability=duplex,
-            self_complementarity=self_comp,
-            modification_pattern="PS backbone + 2'-OMe" if req.gapmer else "PS backbone",
-            gapmer_config=gapmer_config,
-        ))
+        designs.append(
+            ASOHit(
+                id=str(uuid.uuid4()),
+                sequence=seq,
+                length=len(seq),
+                gc_content=gc,
+                melting_temp_c=tm,
+                rnase_h_activity=rnase_h,
+                duplex_stability=duplex,
+                self_complementarity=self_comp,
+                modification_pattern="PS backbone + 2'-OMe" if req.gapmer else "PS backbone",
+                gapmer_config=gapmer_config,
+            )
+        )
 
     designs.sort(key=lambda a: -a.rnase_h_activity)
     return ASODesignResponse(
@@ -230,11 +260,29 @@ def design_aso(req: ASODesignRequest):
 
 @app.post("/mrna/optimize", response_model=mRNADesignResponse)
 def optimize_mrna(req: mRNADesignRequest):
-    start = time.time()
     codon_table = {
-        "human": {"A": "GCC", "C": "TGC", "D": "GAC", "E": "GAG", "F": "TTC", "G": "GGC", "H": "CAC",
-                  "I": "ATC", "K": "AAG", "L": "CTG", "M": "ATG", "N": "AAC", "P": "CCC", "Q": "CAG",
-                  "R": "CGG", "S": "AGC", "T": "ACC", "V": "GTG", "W": "TGG", "Y": "TAC"},
+        "human": {
+            "A": "GCC",
+            "C": "TGC",
+            "D": "GAC",
+            "E": "GAG",
+            "F": "TTC",
+            "G": "GGC",
+            "H": "CAC",
+            "I": "ATC",
+            "K": "AAG",
+            "L": "CTG",
+            "M": "ATG",
+            "N": "AAC",
+            "P": "CCC",
+            "Q": "CAG",
+            "R": "CGG",
+            "S": "AGC",
+            "T": "ACC",
+            "V": "GTG",
+            "W": "TGG",
+            "Y": "TAC",
+        },
     }
     cai = round(float(np.random.uniform(0.7, 0.95)), 3)
     gc = round(float(np.random.uniform(0.4, 0.65)), 3)
@@ -242,17 +290,22 @@ def optimize_mrna(req: mRNADesignRequest):
 
     sequences = []
     for i in range(req.count):
-        coding = "".join(codon_table.get(req.codon_optimization, codon_table["human"]).get(aa[:1], "NNN") for aa in req.protein_sequence[:50])
+        coding = "".join(
+            codon_table.get(req.codon_optimization, codon_table["human"]).get(aa[:1], "NNN")
+            for aa in req.protein_sequence[:50]
+        )
         seq = f"AG{chr(65+i)}UG{chr(65+i)}GC{chr(65+i)}{coding}UAG{chr(68+i)}A{chr(65+i)}"
-        sequences.append({
-            "id": str(uuid.uuid4()),
-            "sequence": seq,
-            "length": len(seq),
-            "coding_region_length": len(coding),
-            "utr5": "AGCU",
-            "utr3": "UAGAUAA",
-            "polyA_tail": "A" * random.randint(100, 150),
-        })
+        sequences.append(
+            {
+                "id": str(uuid.uuid4()),
+                "sequence": seq,
+                "length": len(seq),
+                "coding_region_length": len(coding),
+                "utr5": "AGCU",
+                "utr3": "UAGAUAA",
+                "polyA_tail": "A" * random.randint(100, 150),
+            }
+        )
 
     return mRNADesignResponse(
         sequences=sequences,

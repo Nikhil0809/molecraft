@@ -1,36 +1,96 @@
 services:
-  affinity-predictor:
+  # API Gateway - Single entry point for all model services
+  gateway:
     build:
       context: .
       dockerfile: Dockerfile.models
-    ports:
-      - "8001:8001"
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8001
-    working_dir: /app/models/affinity_predictor
-    volumes:
-      - ./models:/app/models
-
-  molecule-generator:
-    build:
-      context: .
-      dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8000
-    working_dir: /app/models/generative
+      - AFFINITY_API_URL=http://gateway:8000/affinity_predictor
+    command: python -m uvicorn gateway:app --host 0.0.0.0 --port 8000 --workers 4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     volumes:
       - ./models:/app/models
-    depends_on:
-      - affinity-predictor
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
+  # GPU-enabled services (use gpu-prod target)
+  foundation-models:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+      target: gpu-prod
+    ports:
+      - "8005:8005"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8005 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8005/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    working_dir: /app/models/foundation_models
+    volumes:
+      - ./models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  generative-diffusion:
+    build:
+      context: .
+      dockerfile: Dockerfile.models
+      target: gpu-prod
+    ports:
+      - "8008:8008"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python -m uvicorn generative_diffusion.main:app --host 0.0.0.0 --port 8008 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8008/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    working_dir: /app/models
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # CPU services
   rag-pipeline:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8002:8002"
     environment:
@@ -39,7 +99,13 @@ services:
       - PUBMED_API_KEY=${PUBMED_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - INGESTION_API_URL=http://ingestion-service:8011
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8002
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8002 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/rag_pipeline
     volumes:
       - ./models:/app/models
@@ -50,12 +116,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8003:8003"
     environment:
       - PYTHONUNBUFFERED=1
       - VINA_PATH=${VINA_PATH:-vina}
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8003
+      - GNINA_PATH=${GNINA_PATH:-gnina}
+      - DIFFDOCK_MODEL_PATH=${DIFFDOCK_MODEL_PATH:-}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8003 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/docking
     volumes:
       - ./models:/app/models
@@ -64,11 +139,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8004:8004"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8004
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8004 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/proteochem
     volumes:
       - ./models:/app/models
@@ -77,14 +159,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8007:8007"
     environment:
       - PYTHONUNBUFFERED=1
       - RAG_API_URL=http://rag-pipeline:8002
       - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - GROQ_MODEL=${GROQ_MODEL:-mixtral-8x7b-32768}
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8007
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8007 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8007/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/molecule_qa
     volumes:
       - ./models:/app/models
@@ -95,6 +184,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8011:8011"
     environment:
@@ -108,34 +198,34 @@ services:
       - CHROMA_DATABASE=${CHROMA_DATABASE:-molecraft}
       - CHROMA_COLLECTION=${CHROMA_COLLECTION:-molecraft}
       - CHROMA_API_KEY=${CHROMA_API_KEY:-}
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8011
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8011 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8011/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/ingestion_service
     volumes:
       - ./models:/app/models
       - chroma_data:/data/chroma
 
-  foundation-models:
-    build:
-      context: .
-      dockerfile: Dockerfile.models
-    ports:
-      - "8005:8005"
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8005
-    working_dir: /app/models/foundation_models
-    volumes:
-      - ./models:/app/models
-
   admet-ml:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8006:8006"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8006
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8006 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8006/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/admet_ml
     volumes:
       - ./models:/app/models
@@ -144,11 +234,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8010:8010"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8010
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8010 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8010/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/omics_discovery
     volumes:
       - ./models:/app/models
@@ -157,11 +254,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8020:8020"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8020
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8020 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8020/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/antibody_design
     volumes:
       - ./models:/app/models
@@ -170,11 +274,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8021:8021"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8021
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8021 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8021/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/protac_design
     volumes:
       - ./models:/app/models
@@ -183,11 +294,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8022:8022"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8022
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8022 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8022/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/rna_design
     volumes:
       - ./models:/app/models
@@ -196,11 +314,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8023:8023"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8023
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8023 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8023/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/peptide_design
     volumes:
       - ./models:/app/models
@@ -209,11 +334,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8030:8030"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8030
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8030 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8030/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/clinical_trial
     volumes:
       - ./models:/app/models
@@ -222,11 +354,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8040:8040"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8040
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8040 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8040/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/lab_automation
     volumes:
       - ./models:/app/models
@@ -235,11 +374,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8050:8050"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8050
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8050 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8050/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/physics_sim
     volumes:
       - ./models:/app/models
@@ -248,27 +394,35 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.models
+      target: prod
     ports:
       - "8060:8060"
     environment:
       - PYTHONUNBUFFERED=1
-    command: python -m uvicorn main:app --host 0.0.0.0 --port 8060
+    command: python -m uvicorn main:app --host 0.0.0.0 --port 8060 --workers 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8060/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     working_dir: /app/models/patent_ip
     volumes:
       - ./models:/app/models
 
+  # Frontend
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
+      target: runner
     ports:
       - "3000:3000"
-      - "3001:3001"
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
-      - MODEL_API_URL=http://affinity-predictor:8001
-      - GENERATIVE_API_URL=http://molecule-generator:8000
+      - AFFINITY_API_URL=http://gateway:8000/affinity_predictor
+      - GENERATIVE_API_URL=http://gateway:8000/generative
       - RAG_API_URL=http://rag-pipeline:8002
       - DOCKING_API_URL=http://docking:8003
       - PROTEO_API_URL=http://proteochem:8004
@@ -291,10 +445,9 @@ services:
       - LAB_API_URL=http://lab-automation:8040
       - PHYSICS_API_URL=http://physics-sim:8050
       - PATENT_API_URL=http://patent-ip:8060
+      - GENERATIVE_DIFFUSION_API_URL=http://generative-diffusion:8008
     depends_on:
-      - affinity-predictor
-      - molecule-generator
-      - molecule-qa
+      - gateway
       - rag-pipeline
       - ingestion-service
       - docking
@@ -310,6 +463,8 @@ services:
       - lab-automation
       - physics-sim
       - patent-ip
+      - molecule-qa
+      - generative-diffusion
 
 volumes:
   chroma_data:

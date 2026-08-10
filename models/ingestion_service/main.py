@@ -6,8 +6,11 @@ from pipeline import run_pipeline
 from chroma_store import search_chunks, collection_stats, list_collections, delete_collection, is_cloud_configured
 from ingestors import pubchem_ingestor, chembl_ingestor, pubmed_ingestor
 from ingestors.sds_ingestor import ingest_sds_text
+from parsers import parse_file, SUPPORTED_EXTENSIONS
 
 app = FastAPI(title="MoleCraft Ingestion Service", version="2.0.0")
+
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 
 class IngestRequest(BaseModel):
@@ -47,6 +50,38 @@ async def ingest_file(file: UploadFile = File(...)):
     docs = [{"text": text, "source": "file_upload", "filename": file.filename or "unknown"}]
     result = run_pipeline(docs)
     return result
+
+
+@app.post("/parse/file")
+async def parse_file_endpoint(file: UploadFile = File(...)):
+    """Parse an uploaded chemistry file (SMILES/SDF/PDB/CSV/PDF) into
+    structured content with extracted molecules. No vector storage involved."""
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(400, f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit")
+
+    filename = file.filename or "unknown"
+    from pathlib import Path
+
+    ext = Path(filename).suffix.lower()
+    if ext not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(400, f"Unsupported file type '{ext}'. Supported: {sorted(SUPPORTED_EXTENSIONS)}")
+
+    try:
+        parsed = parse_file(filename, content)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Parsing failed: {e}") from e
+
+    return parsed
+
+
+@app.post("/parse")
+async def parse_text(req: IngestRequest):
+    """Parse inline text into structured content (SMILES discovery etc.)."""
+    parsed = parse_file("inline.txt", req.text.encode("utf-8"))
+    return parsed
 
 
 @app.post("/ingest/source")

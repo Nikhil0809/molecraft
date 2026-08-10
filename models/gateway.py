@@ -20,8 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# List of all 18 microservices and their main entry files relative to the models directory
+# List of all microservices and their main entry files relative to the models directory
 SERVICES = [
+    ("generative_diffusion", "generative_diffusion/main.py"),
     ("generative", "generative/main.py"),
     ("affinity_predictor", "affinity_predictor/main.py"),
     ("rag_pipeline", "rag_pipeline/main.py"),

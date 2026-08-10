@@ -6,7 +6,12 @@ UNIPROT_API = "https://rest.uniprot.org/uniprotkb"
 def disambiguate_query(query: str) -> str:
     q = query.strip()
     if q.upper().startswith("COX"):
-        return q.replace("COX-2", "cyclooxygenase-2").replace("COX2", "cyclooxygenase-2").replace("COX-1", "cyclooxygenase-1").replace("COX1", "cyclooxygenase-1")
+        return (
+            q.replace("COX-2", "cyclooxygenase-2")
+            .replace("COX2", "cyclooxygenase-2")
+            .replace("COX-1", "cyclooxygenase-1")
+            .replace("COX1", "cyclooxygenase-1")
+        )
     if q.upper().startswith("EGFR"):
         return "epidermal growth factor receptor " + q
     if "braf" in q.lower() or "b-raf" in q.lower():
@@ -42,7 +47,12 @@ async def search(query: str, depth: str = "normal") -> dict:
 
             for r in results:
                 accession = r.get("primaryAccession", "")
-                name = r.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", "Unknown protein")
+                name = (
+                    r.get("proteinDescription", {})
+                    .get("recommendedName", {})
+                    .get("fullName", {})
+                    .get("value", "Unknown protein")
+                )
                 organism = r.get("organism", {}).get("scientificName", "Unknown")
                 gene = ""
                 genes = r.get("genes", [])
@@ -53,13 +63,15 @@ async def search(query: str, depth: str = "normal") -> dict:
                 if gene:
                     title += f" - Gene: {gene}"
 
-                citations.append({
-                    "source": "UniProt",
-                    "title": title,
-                    "year": 2024,
-                    "url": f"https://www.uniprot.org/uniprotkb/{accession}/entry",
-                    "tier": 1,
-                })
+                citations.append(
+                    {
+                        "source": "UniProt",
+                        "title": title,
+                        "year": 2024,
+                        "url": f"https://www.uniprot.org/uniprotkb/{accession}/entry",
+                        "tier": 1,
+                    }
+                )
 
         return {
             "status": "done" if citations else "empty",

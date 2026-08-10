@@ -1,5 +1,6 @@
-import httpx
 import os
+
+import httpx
 
 CLINICAL_API_URL = os.environ.get("CLINICAL_API_URL", "http://localhost:8030")
 
@@ -26,22 +27,26 @@ async def search(query: str, depth: str = "normal") -> dict:
                 return {"status": "empty", "result_count": 0, "citations": [], "tier": 2}
 
             data = resp.json()
-            citations.append({
-                "source": "ClinicalTrials",
-                "title": f"Simulated trial for '{query}': Phase {data.get('phase', 'N/A')}, Power={data.get('power', 0)}, Success Prob={data.get('predicted_success_probability', 0)}",
-                "year": 2025,
-                "url": f"https://clinicaltrials.gov/search?term={query}",
-                "tier": 2,
-            })
-
-            for arm in data.get("arms", [])[:max_results]:
-                citations.append({
+            citations.append(
+                {
                     "source": "ClinicalTrials",
-                    "title": f"Arm: {arm['arm_name']} (n={arm['sample_size']}, effect={arm.get('effect_size', 0)}, p={arm.get('p_value', 0)})",
+                    "title": f"Simulated trial for '{query}': Phase {data.get('phase', 'N/A')}, Power={data.get('power', 0)}, Success Prob={data.get('predicted_success_probability', 0)}",
                     "year": 2025,
                     "url": f"https://clinicaltrials.gov/search?term={query}",
                     "tier": 2,
-                })
+                }
+            )
+
+            for arm in data.get("arms", [])[:max_results]:
+                citations.append(
+                    {
+                        "source": "ClinicalTrials",
+                        "title": f"Arm: {arm['arm_name']} (n={arm['sample_size']}, effect={arm.get('effect_size', 0)}, p={arm.get('p_value', 0)})",
+                        "year": 2025,
+                        "url": f"https://clinicaltrials.gov/search?term={query}",
+                        "tier": 2,
+                    }
+                )
 
         return {
             "status": "done" if citations else "empty",

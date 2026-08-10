@@ -114,3 +114,47 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const cookieStore = await req.cookies;
+    const sessionCookie = cookieStore.get("molecraft_session");
+
+    if (!sessionCookie || !sessionCookie.value) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const verified = await verifySession(sessionCookie.value);
+    if (!verified) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = verified.user.id;
+    const body = await req.json();
+    const { professionalRole, usageIntent, referralSource } = body;
+
+    const allowed = ["academic", "industry", "student", "bioinformatician", "clinician", "other", null];
+    const allowedIntents = ["drug-discovery", "target-id", "molecular-modeling", "education", "lit-review", "other", null];
+    if (professionalRole !== undefined && !allowed.includes(professionalRole)) {
+      return NextResponse.json({ error: "Invalid professional role" }, { status: 400 });
+    }
+    if (usageIntent !== undefined && !allowedIntents.includes(usageIntent)) {
+      return NextResponse.json({ error: "Invalid usage intent" }, { status: 400 });
+    }
+
+    await sql`
+      UPDATE users
+      SET
+        professional_role = COALESCE(${professionalRole ?? null}, professional_role),
+        usage_intent = COALESCE(${usageIntent ?? null}, usage_intent),
+        referral_source = COALESCE(${referralSource ?? null}, referral_source),
+        updated_at = NOW()
+      WHERE id = ${userId}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PATCH /api/user error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
