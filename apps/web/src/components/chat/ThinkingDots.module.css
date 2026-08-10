@@ -1,0 +1,65 @@
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8b8fa3;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
+.bars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.bar {
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #a78bfa, #6366f1);
+  animation: barBounce 1s ease-in-out infinite;
+}
+
+.bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+.bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+.bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+
+@keyframes barBounce {
+  0%, 100% {
+    transform: scaleY(0.45);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.stage {
+  display: inline-flex;
+  align-items: baseline;
+  letter-spacing: 0.02em;
+  animation: stageIn 0.3s ease;
+}
+
+@keyframes stageIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dots i {
+  font-style: normal;
+  animation: dotPulse 1.2s infinite;
+}
+
+.dots i:nth-child(1) { animation-delay: 0s; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 60%, 100% { opacity: 0.2; }
+  30% { opacity: 1; }
+}

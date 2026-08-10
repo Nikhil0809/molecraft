@@ -6,6 +6,8 @@ import { MarkdownContent } from "@/components/chat/MarkdownContent";
 import { CitationCard, type ChatCitation, type ChatSource } from "@/components/chat/CitationCard";
 import { TokenCounter } from "@/components/chat/TokenCounter";
 import { MessageActions } from "@/components/chat/MessageActions";
+import { ThinkingDots } from "@/components/chat/ThinkingDots";
+import { FollowUpSuggestions } from "@/components/chat/FollowUpSuggestions";
 import styles from "./page.module.css";
 
 interface Message {
@@ -92,6 +94,39 @@ const getSuggestionIcon = (text: string) => {
   return "fa-regular fa-lightbulb";
 };
 
+const FILE_ICONS: Record<string, string> = {
+  image: "fa-regular fa-image",
+  pdf: "fa-solid fa-file-pdf",
+  text: "fa-regular fa-file-lines",
+  csv: "fa-solid fa-file-csv",
+  "chemical/x-sdf": "fa-solid fa-flask",
+  "chemical/x-pdb": "fa-solid fa-dna",
+};
+
+const PREFS_COOKIE = "molecraft_chat_prefs";
+const PREFS_MAX_AGE = 60 * 60 * 24 * 365;
+
+interface ChatPrefs {
+  model?: string;
+  sidebar?: boolean;
+}
+
+function readPrefs(): ChatPrefs {
+  try {
+    const match = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(`${PREFS_COOKIE}=`));
+    if (!match) return {};
+    return JSON.parse(decodeURIComponent(match.slice(PREFS_COOKIE.length + 1))) as ChatPrefs;
+  } catch {
+    return {};
+  }
+}
+
+function writePrefs(prefs: ChatPrefs) {
+  document.cookie = `${PREFS_COOKIE}=${encodeURIComponent(JSON.stringify(prefs))}; path=/; max-age=${PREFS_MAX_AGE}; samesite=lax`;
+}
+
 export default function ChatPage() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -107,12 +142,19 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] = useState("");
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [lastDoneIndex, setLastDoneIndex] = useState(-1);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modelPickerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<Message[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -132,12 +174,25 @@ export default function ChatPage() {
         const modelList = (data.models ?? []) as ModelOption[];
         if (modelList.length > 0) {
           setModels(modelList);
-          const defaultM = modelList.find((m) => m.best) || modelList[0];
+          const prefs = readPrefs();
+          const saved = modelList.find((m) => m.id === prefs.model);
+          const defaultM = saved || modelList.find((m) => m.best) || modelList[0];
           if (defaultM) setSelectedModel(defaultM.id);
         }
       }
     } catch {}
   }, []);
+
+  useEffect(() => {
+    const prefs = readPrefs();
+    if (typeof prefs.sidebar === "boolean") {
+      setSidebarOpen(prefs.sidebar);
+    }
+  }, []);
+
+  useEffect(() => {
+    writePrefs({ model: selectedModel || undefined, sidebar: sidebarOpen });
+  }, [selectedModel, sidebarOpen]);
 
   const fetchConversations = async () => {
     try {
@@ -183,6 +238,14 @@ export default function ChatPage() {
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages);
+        setLastDoneIndex(
+          Math.max(
+            -1,
+            data.messages.findIndex((m: Message, i: number, arr: Message[]) =>
+              m.role === "assistant" && !m.streaming && i === arr.length - 1
+            )
+          )
+        );
       }
     } catch {}
   }, []);
@@ -209,6 +272,11 @@ export default function ChatPage() {
       reader.readAsDataURL(file);
     }
     e.target.value = "";
+  };
+
+  const addFilesFromList = (list: FileList | null) => {
+    if (!list) return;
+    handleFileSelect({ target: { files: list, value: "" } } as unknown as React.ChangeEvent<HTMLInputElement>);
   };
 
   const removeFile = (id: string) => {
@@ -240,8 +308,12 @@ export default function ChatPage() {
     assistantMsgId: string,
     regenerate = false
   ) => {
-    const controller = new AbortController();
-    abortRef.current = controller;
+    const makeController = () => {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      return controller;
+    };
+
     setLoading(true);
     setBusyMessages((prev) => new Set(prev).add(assistantMsgId));
 
@@ -261,65 +333,111 @@ export default function ChatPage() {
 
     let accumulatedText = "";
 
-    try {
-      const res = await fetch("/api/chat/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query,
-          conversationId,
-          model: selectedModel,
-          stream: true,
-          regenerate,
-        }),
-        signal: controller.signal,
-      });
+    const attempt = async (route: string): Promise<boolean> => {
+      const controller = makeController();
+      try {
+        const res = await fetch(route, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            conversationId,
+            model: selectedModel,
+            stream: true,
+            regenerate,
+          }),
+          signal: controller.signal,
+        });
 
-      if (!res.ok || !res.body) {
+        if (!res.ok || !res.body) return false;
+
+        const contentType = res.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+          try {
+            const json = await res.json();
+            const answer: string | undefined = json?.answer;
+            if (answer && answer.trim()) {
+              accumulatedText = answer;
+              patchAssistant({
+                content: answer,
+                model: json?.model || undefined,
+                sources: json?.sources as ChatSource[] | undefined,
+                citations: json?.citations as ChatCitation[] | undefined,
+                streaming: false,
+              });
+              return true;
+            }
+          } catch {}
+          return false;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let gotTokens = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || controller.signal.aborted) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+
+          for (const event of events) {
+            const line = event.trim();
+            if (!line.startsWith("data:")) continue;
+            const payload = line.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const evt = JSON.parse(payload) as SSEEvent;
+              if (evt.type === "meta") {
+                patchAssistant({
+                  model: evt.model,
+                  sources: evt.sources,
+                  citations: evt.citations,
+                });
+              } else if (evt.type === "token" && evt.token) {
+                gotTokens = true;
+                accumulatedText += evt.token;
+                appendToken(evt.token);
+              } else if (evt.type === "error") {
+                if (!gotTokens) return false;
+                patchAssistant({
+                  content: (accumulatedText ? accumulatedText + "\n\n" : "") + `Error: ${evt.error}`,
+                  streaming: false,
+                });
+              }
+            } catch {}
+          }
+        }
+
+        if (controller.signal.aborted) {
+          patchAssistant({ streaming: false });
+          return true;
+        }
+        if (!gotTokens) return false;
+
+        patchAssistant({ streaming: false });
+        return true;
+      } catch (e) {
+        if ((e as Error)?.name !== "AbortError") return false;
+        throw e;
+      }
+    };
+
+    try {
+      let ok = await attempt("/api/chat/ask");
+      if (!ok) {
+        ok = await attempt("/api/chat/groq");
+      }
+      if (!ok) {
         patchAssistant({
-          content: "Sorry, the model service is unavailable. Please try again.",
+          content: accumulatedText || "Sorry, the model service is unavailable. Please try again.",
           error: "request_failed",
           streaming: false,
         });
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done || controller.signal.aborted) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-
-        for (const event of events) {
-          const line = event.trim();
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (!payload) continue;
-          try {
-            const evt = JSON.parse(payload) as SSEEvent;
-            if (evt.type === "meta") {
-              patchAssistant({
-                model: evt.model,
-                sources: evt.sources,
-                citations: evt.citations,
-              });
-            } else if (evt.type === "token" && evt.token) {
-              accumulatedText += evt.token;
-              appendToken(evt.token);
-            } else if (evt.type === "error") {
-              patchAssistant({
-                content: (accumulatedText ? accumulatedText + "\n\n" : "") + `Error: ${evt.error}`,
-                streaming: false,
-              });
-            }
-          } catch {}
-        }
       }
     } catch (e) {
       if ((e as Error)?.name !== "AbortError") {
@@ -336,6 +454,8 @@ export default function ChatPage() {
       abortRef.current = null;
       setBusyMessages(new Set());
       setLoading(false);
+      const doneIdx = messagesRef.current.findIndex((m) => m.id === assistantMsgId);
+      if (doneIdx >= 0) setLastDoneIndex(doneIdx);
       fetchConversations();
     }
   }, [selectedModel, persistAssistant]);
@@ -415,6 +535,8 @@ export default function ChatPage() {
 
     if (!fullContent.trim()) return;
 
+    const savedText = text;
+
     setInput("");
     setFiles([]);
     setLoading(true);
@@ -453,7 +575,7 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, assistantMsg]);
 
     if (!convId) return;
-    await streamAsk(convId, fullContent, assistantMsgId);
+    await streamAsk(convId, savedText || fullContent, assistantMsgId);
   };
 
   const handleRegenerate = useCallback(async (index: number) => {
@@ -496,7 +618,6 @@ export default function ChatPage() {
 
     const assistantMsgId = `a-${Date.now()}`;
 
-    // Local branch: truncate everything after the edited message.
     setMessages((prev) => {
       const idx = prev.findIndex((m) => m.id === editingMsg.id);
       if (idx < 0) return prev;
@@ -542,15 +663,16 @@ export default function ChatPage() {
     }
   };
 
-  const newConversation = () => {
+  const newConversation = useCallback(() => {
     setActiveConvId(null);
     setMessages([]);
     setLoading(false);
     setInput("");
     setFiles([]);
     setEditingMsg(null);
+    setLastDoneIndex(-1);
     inputRef.current?.focus();
-  };
+  }, []);
 
   const deleteConversation = useCallback(async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -571,12 +693,21 @@ export default function ChatPage() {
     await fetchMessages(id);
   }, [fetchMessages]);
 
+  const pickFollowUp = (text: string) => {
+    setInput(text);
+    inputRef.current?.focus();
+  };
+
   const hasMessages = messages.length > 0;
   const showSend = (input.trim().length > 0 || files.length > 0) && !parsing;
 
   const sidebar = useMemo(() => (
     <aside className={`${styles.historySidebar} ${sidebarOpen ? "" : styles.historyCollapsed}`}>
       <div className={styles.historyHeader}>
+        <span className={styles.historyBrand}>
+          <img src="/logo.png" className={styles.historyBrandImg} alt="MoleCraft" />
+          <span className={styles.historyBrandText}>&nbsp;</span>
+        </span>
         <button className={styles.toggleBtn} onClick={() => setSidebarOpen(!sidebarOpen)} title={sidebarOpen ? "Close sidebar" : "Open sidebar"}>
           <i className={`fa-solid ${sidebarOpen ? "fa-chevron-left" : "fa-chevron-right"}`}></i>
         </button>
@@ -614,8 +745,41 @@ export default function ChatPage() {
           </div>
         ))}
       </div>
+
+      <div className={styles.historyFooter}>
+        <div className={styles.modelPicker} ref={modelPickerRef}>
+          <button
+            className={styles.modelPickerBtn}
+            onClick={() => setModelPickerOpen(!modelPickerOpen)}
+          >
+            <i className="fa-solid fa-bolt"></i>
+            <span className={styles.modelPickerName}>
+              {models.find((m) => m.id === selectedModel)?.name || (editingMsg ? "Editing..." : "Groq")}
+            </span>
+            <i className="fa-solid fa-chevron-down"></i>
+          </button>
+          {modelPickerOpen && (
+            <div className={styles.modelPickerDropdown}>
+              {models.map((m) => (
+                <button
+                  key={m.id}
+                  className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
+                  onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
+                >
+                  <span className={styles.modelOptionName}>
+                    {m.name}
+                    {m.best && <span className={styles.modelBestBadge}>Best</span>}
+                  </span>
+                  {m.id === selectedModel && <i className="fa-solid fa-check"></i>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className={styles.historyUser}>{user?.display_name || "Researcher"}</span>
+      </div>
     </aside>
-  ), [conversations, activeConvId, sidebarOpen, deleteConversation, selectConversation]);
+  ), [conversations, activeConvId, sidebarOpen, deleteConversation, selectConversation, models, selectedModel, modelPickerOpen, editingMsg, newConversation, user]);
 
   const messageList = useMemo(() => (
     <div className={styles.messagesContainer}>
@@ -623,21 +787,25 @@ export default function ChatPage() {
         {messages.map((msg, index) => {
           const busy = busyMessages.has(msg.id);
           const isUser = msg.role === "user";
+          const showFollowUps = !isUser && !msg.streaming && !!msg.content && !msg.error && index === messages.length - 1 && index === lastDoneIndex;
           return (
-            <div key={msg.id} className={`${styles.message} ${isUser ? styles.messageUser : styles.messageAI}`}>
+            <div
+              key={msg.id}
+              className={`${styles.message} ${isUser ? styles.messageUser : styles.messageAI}`}
+              style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
+            >
               {!isUser && (
                 <div className={`${styles.msgAvatar} ${msg.streaming ? styles.msgAvatarThinking : ""}`}>
                   <img src="/logo.png" className={styles.msgAvatarImg} alt="AI" />
+                  {msg.streaming && <span className={styles.avatarPing}></span>}
                 </div>
               )}
               <div className={styles.msgBubble}>
-                <div className={`${styles.msgBody} ${msg.streaming ? styles.streamingBody : ""}`}>
+                <div className={`${styles.msgBody} ${isUser ? styles.msgBodyUser : ""} ${msg.streaming && msg.content ? styles.streamingBody : ""}`}>
                   {msg.content ? (
                     <MarkdownContent content={msg.content} />
                   ) : msg.streaming ? (
-                    <div className={styles.thinkingText}>
-                      {editingMsg ? "Searching & reasoning..." : "Thinking..."}
-                    </div>
+                    <ThinkingDots />
                   ) : msg.error ? (
                     <p className={styles.msgError}>{msg.error}</p>
                   ) : ("")}
@@ -649,7 +817,6 @@ export default function ChatPage() {
                     />
                   )}
                 </div>
-                {msg.streaming && <span className={styles.streamCursor}></span>}
                 <div className={styles.msgMeta}>
                   <span className={styles.msgTime}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -665,6 +832,7 @@ export default function ChatPage() {
                     />
                   </span>
                 </div>
+                {showFollowUps && <FollowUpSuggestions seed={index + 1} onPick={pickFollowUp} />}
               </div>
             </div>
           );
@@ -672,12 +840,21 @@ export default function ChatPage() {
         <div ref={endRef} />
       </div>
     </div>
-  ), [messages, busyMessages, editingMsg, handleRegenerate, handleEdit]);
+  ), [messages, busyMessages, lastDoneIndex, handleRegenerate, handleEdit]);
 
   const tokenMessages = useMemo(
     () => messages.filter((m) => m.role === "user" || (m.role === "assistant" && !m.streaming)),
     [messages]
   );
+
+  const fileIcon = (f: ChatFile) => {
+    if (f.name.endsWith(".sdf") || f.name.endsWith(".mol")) return "fa-solid fa-flask";
+    if (f.name.endsWith(".pdb")) return "fa-solid fa-dna";
+    if (f.type.startsWith("image/")) return FILE_ICONS.image;
+    if (f.type === "application/pdf") return FILE_ICONS.pdf;
+    if (f.type === "text/csv" || f.type === "text/tsv") return FILE_ICONS.csv;
+    return FILE_ICONS.text;
+  };
 
   const inputAreaContent = (
     <>
@@ -685,9 +862,10 @@ export default function ChatPage() {
         <div className={styles.filePreviews}>
           {files.map((f) => (
             <div key={f.id} className={styles.fileChip}>
-              <i className={f.type.startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file"}></i>
+              <i className={fileIcon(f)}></i>
               <span className={styles.fileChipName}>{f.name}</span>
-              <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)}>
+              <span className={styles.fileChipSize}>{Math.round(f.size / 1024)} KB</span>
+              <button className={styles.fileChipRemove} onClick={() => removeFile(f.id)} title="Remove file">
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -706,7 +884,7 @@ export default function ChatPage() {
       <textarea
         ref={inputRef}
         className={styles.inputField}
-        placeholder={editingMsg ? "Edit your message..." : "Write a message..."}
+        placeholder={editingMsg ? "Edit your message..." : "Message MoleCraft…"}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -715,7 +893,7 @@ export default function ChatPage() {
       <div className={styles.inputToolbar}>
         <div className={styles.inputToolbarLeft}>
           <button className={styles.inputActionBtn} onClick={() => fileInputRef.current?.click()} title="Attach file">
-            <i className="fa-regular fa-plus"></i>
+            <i className="fa-solid fa-paperclip"></i>
           </button>
           <input
             ref={fileInputRef}
@@ -725,35 +903,10 @@ export default function ChatPage() {
             className={styles.hiddenInput}
             onChange={handleFileSelect}
           />
+          <span className={styles.inputHint}>Enter to send · Shift+Enter for new line · Ctrl+K to focus</span>
         </div>
         <div className={styles.inputActionsRight}>
           <TokenCounter messages={tokenMessages} input={loading ? "" : input} />
-          <div className={styles.modelPicker} ref={modelPickerRef}>
-            <button
-              className={styles.modelPickerBtn}
-              onClick={() => setModelPickerOpen(!modelPickerOpen)}
-            >
-              <span>{models.find((m) => m.id === selectedModel)?.name || (editingMsg ? "Editing..." : "Groq")}</span>
-              <i className="fa-solid fa-chevron-down"></i>
-            </button>
-            {modelPickerOpen && (
-              <div className={styles.modelPickerDropdown}>
-                {models.map((m) => (
-                  <button
-                    key={m.id}
-                    className={`${styles.modelOption} ${m.id === selectedModel ? styles.modelOptionActive : ""}`}
-                    onClick={() => { setSelectedModel(m.id); setModelPickerOpen(false); }}
-                  >
-                    <span className={styles.modelOptionName}>
-                      {m.name}
-                      {m.best && <span className={styles.modelBestBadge}>Best</span>}
-                    </span>
-                    {m.id === selectedModel && <i className="fa-solid fa-check"></i>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
           {editingMsg ? (
             <button className={styles.sendBtn} onClick={saveEdit} title="Save edit">
               <i className="fa-solid fa-check"></i>
@@ -763,36 +916,50 @@ export default function ChatPage() {
               <i className="fa-solid fa-spinner fa-spin"></i>
             </button>
           ) : loading ? (
-            <button className={styles.stopBtn} onClick={stopGeneration} title="Stop">
-              <i className="fa-solid fa-square"></i>
+            <button className={styles.stopBtn} onClick={stopGeneration} title="Stop generating">
+              <i className="fa-solid fa-stop"></i>
             </button>
           ) : showSend ? (
-            <button className={styles.sendBtn} onClick={handleSubmit} title="Send">
+            <button className={styles.sendBtn} onClick={handleSubmit} title="Send message">
               <i className="fa-solid fa-arrow-up"></i>
             </button>
           ) : (
-            <>
-              <button className={styles.micBtn} title="Voice input">
-                <i className="fa-solid fa-microphone"></i>
-              </button>
-              <div className={styles.waveformIcon} title="Voice feedback">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </>
+            <button className={styles.sendBtnDisabled} title="Type a message or attach a file" disabled>
+              <i className="fa-solid fa-arrow-up"></i>
+            </button>
           )}
         </div>
       </div>
     </>
   );
 
+  const inputShell = (variant: "footer" | "welcome") => (
+    <div
+      className={`${variant === "welcome" ? styles.welcomeInputBox : styles.inputBox} ${dragging ? styles.dropActive : ""}`}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        addFilesFromList(e.dataTransfer.files);
+      }}
+    >
+      {dragging && (
+        <div className={styles.dropOverlay}>
+          <i className="fa-solid fa-cloud-arrow-up"></i>
+          <span>Drop files to attach</span>
+        </div>
+      )}
+      {inputAreaContent}
+    </div>
+  );
+
   return (
     <div className={styles.page}>
       {initialLoading ? (
         <div className={styles.initialLoader}>
-          <div className={`${styles.spinnerCircle} ${styles.spinnerCircleLarge}`} />
+          <div className={styles.initialLogo}><img src="/logo.png" alt="MoleCraft" /></div>
+          <span className={styles.initialLabel}>Warming up the lab…</span>
         </div>
       ) : (
         <>
@@ -806,6 +973,10 @@ export default function ChatPage() {
                       <i className="fa-solid fa-bars"></i>
                     </button>
                   )}
+                  <span className={styles.headerModelChip} title="Model">
+                    <i className="fa-solid fa-bolt"></i>
+                    {models.find((m) => m.id === selectedModel)?.name || "Groq"}
+                  </span>
                   <div className={styles.chatHeaderSpacer} />
                   <button className={styles.editBtn} onClick={newConversation} title="New chat">
                     <i className="fa-regular fa-pen-to-square"></i>
@@ -815,7 +986,8 @@ export default function ChatPage() {
                 {messageList}
 
                 <div className={styles.inputFooter}>
-                  <div className={styles.inputBox}>{inputAreaContent}</div>
+                  {inputShell("footer")}
+                  <p className={styles.footerNote}>MoleCraft can make mistakes. Verify critical chemistry in the lab.</p>
                 </div>
               </>
             ) : (
@@ -833,11 +1005,13 @@ export default function ChatPage() {
                 </header>
 
                 <div className={styles.welcomeArea}>
+                  <div className={styles.welcomeBadge}>MoleCraft AI · Groq powered</div>
                   <h1 className={styles.welcomeTitle}>
-                    What&apos;s the vibe, <span className={styles.welcomeName}>{user?.display_name || "Researcher"}</span>?
+                    Hello, <span className={styles.welcomeName}>{user?.display_name || "Researcher"}</span>
                   </h1>
+                  <p className={styles.welcomeSubtitle}>Design molecules, mine the literature, accelerate discovery.</p>
 
-                  <div className={styles.welcomeInputBox}>{inputAreaContent}</div>
+                  {inputShell("welcome")}
 
                   <div className={styles.suggestions}>
                     {SUGGESTIONS_BY_COUNT.flat().slice(0, 6).map((s, i) => (
@@ -848,8 +1022,9 @@ export default function ChatPage() {
                           setInput(s);
                           inputRef.current?.focus();
                         }}
+                        style={{ animationDelay: `${i * 70}ms` }}
                       >
-                        <i className={getSuggestionIcon(s)} style={{ fontSize: '11px', color: '#7C3AED' }}></i>
+                        <i className={getSuggestionIcon(s)}></i>
                         <span>{s}</span>
                       </button>
                     ))}

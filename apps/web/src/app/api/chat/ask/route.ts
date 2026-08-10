@@ -247,17 +247,6 @@ export async function POST(req: Request) {
   const model = selectedModel || GROQ_MODEL;
   const filter = isChemistryQuery(query);
 
-  if (!filter.allowed) {
-    return NextResponse.json({
-      answer: "I specialize in chemistry, molecular design, and drug discovery topics. Your question doesn't appear to be related to these areas. Please ask about molecules, drugs, targets, proteins, or related scientific topics.",
-      model,
-      chemistry_score: filter.score,
-      chemistry_reason: filter.reason,
-      sources: [],
-      citations: [],
-    });
-  }
-
   const { history, historyTokens } = conversationId
     ? await loadHistory(conversationId, query, !!regenerate)
     : { history: [], historyTokens: 0 };
